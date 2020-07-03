@@ -12,3 +12,6 @@ https://discord.gg/5Wj8yxy
 
 ### Setting up your Workspace
 After cloning the repository you should run the gradle task `setupDecompWorkspace` and then refresh the gradle dependencies.
+
+### Latest JavaDocs
+https://pulverizer.github.io/Movecraft-for-Sponge/
