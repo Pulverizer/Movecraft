@@ -49,6 +49,7 @@ public class CrewManager {
 
         if (!craft.getCommander().equals(sender.getUniqueId())) {
             sender.sendMessage(Text.of("You are not the commander of your craft."));
+            return;
         }
 
         if (!sender.hasPermission("movecraft." + craft.getType().getName() + ".crew.invite") && (craft.getType().requiresSpecificPerms() || !sender.hasPermission("movecraft.crew.invite"))) {

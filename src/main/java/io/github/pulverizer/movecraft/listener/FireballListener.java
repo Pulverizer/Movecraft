@@ -33,7 +33,7 @@ public class FireballListener {
 
         if (!FireballTracking.containsKey(fireball)) {
 
-            Craft craft = CraftManager.getInstance().fastNearestCraftToLoc(fireball.getLocation());
+            Craft craft = CraftManager.getInstance().getCraftFromLocation(((Dispenser) fireball.getShooter()).getLocation());
 
             if (craft != null) {
 

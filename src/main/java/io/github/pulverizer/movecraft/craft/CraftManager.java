@@ -211,6 +211,16 @@ public class CraftManager implements Iterable<Craft> {
         return results;
     }
 
+    public Craft getCraftFromLocation(Location<World> location) {
+        for (Craft testCraft : getCraftsInWorld(location.getExtent())) {
+            if (testCraft.getHitBox().contains(location.getBlockPosition())) {
+                return testCraft;
+            }
+        }
+
+        return null;
+    }
+
     public HashSet<Craft> getCraftsIntersectingWith(HashHitBox hitBox, World world) {
         HashSet<Craft> results = new HashSet<>();
 

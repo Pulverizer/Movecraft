@@ -1,17 +1,20 @@
 package io.github.pulverizer.movecraft.config;
 
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import io.github.pulverizer.movecraft.Movecraft;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import org.slf4j.Logger;
 import org.spongepowered.api.block.BlockType;
+import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class Settings {
     public static boolean Debug = false;
@@ -36,10 +39,11 @@ public class Settings {
     public static boolean EnableCrewSigns = true;
     // TODO - Should we be overriding /home ?
     //public static boolean SetHomeToCrewSign = true;
-    public static Map<BlockType, Integer> DurabilityOverride;
+    public static Map<BlockType, Float> DurabilityOverride;
     public static HashSet<BlockType> DisableShadowBlocks;
     public static boolean ReleaseOnCrewDeath;
     public static int InviteTimeout;
+    public static HashSet<BlockType> FlightDeckBlocks;
     public static int AmmoDetonationMultiplier;
 
 
@@ -89,7 +93,7 @@ public class Settings {
         Settings.DurabilityOverride = new HashMap<>();
 
         try {
-            Map<BlockType, Integer> tempMap = mainConfigNode.getNode("DurabilityOverride").getValue(new TypeToken<Map<BlockType, Integer>>() {});
+            Map<BlockType, Float> tempMap = mainConfigNode.getNode("DurabilityOverride").getValue(new TypeToken<Map<BlockType, Float>>() {});
             if (tempMap != null)
                 for (Object blockType : tempMap.keySet().toArray())
                     Settings.DurabilityOverride.put((BlockType) blockType, tempMap.get(blockType));
@@ -107,6 +111,15 @@ public class Settings {
         }
 
         Settings.InviteTimeout = mainConfigNode.getNode("InviteTimeout").getInt(60*20); // default = 1 minute
+
+        try {
+            Settings.FlightDeckBlocks = new HashSet<>(mainConfigNode.getNode("FlightDeckBlocks").getList(TypeToken.of(BlockType.class)));
+        } catch (ObjectMappingException e) {
+            e.printStackTrace();
+
+            Settings.FlightDeckBlocks = new HashSet<>();
+        }
+
         Settings.AmmoDetonationMultiplier = mainConfigNode.getNode("AmmoDetonationMultiplier").getInt(0);
 
 

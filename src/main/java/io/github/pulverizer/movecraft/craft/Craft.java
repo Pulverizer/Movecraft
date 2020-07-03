@@ -1,6 +1,5 @@
 package io.github.pulverizer.movecraft.craft;
 
-import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.Movecraft;
 import io.github.pulverizer.movecraft.async.AsyncTask;
@@ -11,6 +10,7 @@ import io.github.pulverizer.movecraft.config.CraftType;
 import io.github.pulverizer.movecraft.enums.DirectControlMode;
 import io.github.pulverizer.movecraft.enums.Rotation;
 import io.github.pulverizer.movecraft.event.CraftSinkEvent;
+import io.github.pulverizer.movecraft.utils.ChatUtils;
 import io.github.pulverizer.movecraft.utils.HashHitBox;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
@@ -30,6 +30,7 @@ import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.chat.ChatTypes;
+import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
@@ -102,6 +103,9 @@ public class Craft {
 
     // Direct Control
     private DirectControlMode directControl = DirectControlMode.OFF;
+
+    //Contacts
+    HashMap<Craft, Integer> contactTracking = new HashMap<>();
 
 
     /**
@@ -913,51 +917,107 @@ public class Craft {
     }
 
 
-
     // MISC
 
-    public HashSet<Craft> getContacts() {
-        HashSet<Craft> contacts = new HashSet<>();
+    public Set<Craft> getContacts() {
+        return contactTracking.keySet();
+    }
 
-        if (type.getSpottingMultiplier() > 0) {
+    public String getContactChatMessage(Craft contact) {
+        // TODO - Code correctly
+        String commanderName = null;
+        if (contact.getCommander() != null) {
+            commanderName = Sponge.getServer().getPlayer(contact.getCommander()).get().getName();
+        }
+
+        return String.format("%s commanded by %s, size: %d, range: %d to the %s.",
+                contact.getType().getName(),
+                commanderName,
+                contact.getInitialSize(),
+                (int) hitBox.getMidPoint().toFloat().distance(contact.getHitBox().getMidPoint().toFloat()),
+                ChatUtils.abbreviateDirection(Direction.getClosest(hitBox.getMidPoint().sub(contact.getHitBox().getMidPoint()).toDouble())));
+    }
+
+    public String getContactSignMessage(Craft contact) {
+
+        float distance = hitBox.getMidPoint().toFloat().distance(contact.getHitBox().getMidPoint().toFloat());
+
+        String type = contact.getType().getName();
+
+        if (type.length() > 7) {
+            type = type.substring(0, 7);
+        }
+
+        String string;
+
+        if (distance > 9999) {
+            string = String.format("%s %.0fk %s",
+                    type,
+                    distance / 1000,
+                    ChatUtils.abbreviateDirection(Direction.getClosest(hitBox.getMidPoint().sub(contact.getHitBox().getMidPoint()).toDouble())));
+
+        } else {
+            string = String.format("%s %.0f %s",
+                    type,
+                    distance,
+                    ChatUtils.abbreviateDirection(Direction.getClosest(hitBox.getMidPoint().sub(contact.getHitBox().getMidPoint()).toDouble())));
+        }
+
+
+
+        if (string.length() > 16) {
+            string = string.substring(0, 16);
+        }
+
+        return string;
+    }
+
+    public void runContacts() {
+        if (!crewIsEmpty() && type.getSpottingMultiplier() > 0) {
 
             float viewRange = hitBox.size() * type.getSpottingMultiplier();
 
-            Vector3i middle = hitBox.getMidPoint();
-            int zMax = (int) (middle.getZ() + viewRange);
-            int zMin = (int) (middle.getZ() - viewRange);
-            int xMax = (int) (middle.getX() + viewRange);
-            int xMin = (int) (middle.getX() - viewRange);
-            int yMax = (int) (middle.getY() + viewRange);
-            int yMin = (int) (middle.getY() - viewRange);
+            Vector3i spotterMiddle = hitBox.getMidPoint();
 
             float viewRangeSquared = viewRange * viewRange;
 
-            for (Craft contact : CraftManager.getInstance().getCraftsInWorld(world)) {
+            for (final Craft contact : CraftManager.getInstance().getCraftsInWorld(world)) {
                 if (contact.getType().getDetectionMultiplier() > 0) {
                     Vector3i contactMiddle = contact.getHitBox().getMidPoint();
 
-                    if (contactMiddle.getZ() <= zMax && contactMiddle.getZ() >= zMin
-                            && contactMiddle.getX() <= xMax && contactMiddle.getX() >= xMin
-                            && contactMiddle.getY() <= yMax && contactMiddle.getY() >= yMin) {
+                    float distanceSquared = contactMiddle.toFloat().distanceSquared(spotterMiddle.toFloat());
 
-                        float distanceSquared = contactMiddle.toFloat().distanceSquared(middle.toFloat());
+                    if (distanceSquared <= viewRangeSquared && !hitBox.intersects(contact.getHitBox())) {
+                        //TODO - implement Underwater Detection Multiplier
+                        float contactDetectability = (float) (contact.getHitBox().size() * contact.getType().getDetectionMultiplier());
+                        float detectableSizeAtDistanceSquared = hitBox.size() - ((distanceSquared / viewRangeSquared) * hitBox.size());
 
-                        if (!hitBox.intersects(contact.getHitBox()) && distanceSquared <= viewRangeSquared) {
-                            //TODO - implement Underwater Detection Multiplier
-                            float contactDetectability = (float) (contact.getHitBox().size() * contact.getType().getDetectionMultiplier());
-                            float detectableSizeAtDistanceSquared = hitBox.size() - ((distanceSquared / viewRangeSquared) * hitBox.size());
+                        if (contactDetectability > detectableSizeAtDistanceSquared) {
+                            // craft has been detected
+                            // has the craft not been seen in the last minute, or is completely new?
+                            if (contactTracking.get(contact) == null
+                                    || Sponge.getServer().getRunningTimeTicks() - contactTracking.get(contact) > 1200) {
 
-                            if (contactDetectability > detectableSizeAtDistanceSquared) {
-                                contacts.add(contact);
+                                // TODO - should be entire crew
+                                Sponge.getServer().getPlayer(commander).ifPresent(player -> {
+                                    player.sendMessage(Text.of("New Contact: " + getContactChatMessage(contact)));
+                                    world.playSound(SoundTypes.BLOCK_ANVIL_LAND, player.getLocation().getPosition(), 1.0f, 2.0f);
+                                });
                             }
+
+                            int timestamp = Sponge.getServer().getRunningTimeTicks();
+                            contactTracking.put(contact, timestamp);
                         }
                     }
                 }
             }
         }
 
-        return contacts;
+       for (Map.Entry<Craft, Integer> entry : contactTracking.entrySet()) {
+            if (Sponge.getServer().getRunningTimeTicks() - entry.getValue() > 1200) {
+                contactTracking.remove(entry.getKey());
+            }
+        }
     }
 
     public void submitTask(AsyncTask task) {

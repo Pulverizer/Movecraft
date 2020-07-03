@@ -3,24 +3,21 @@ package io.github.pulverizer.movecraft.listener;
 import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.Movecraft;
-import io.github.pulverizer.movecraft.async.AsyncManager;
 import io.github.pulverizer.movecraft.config.Settings;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
+import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
-import org.spongepowered.api.block.BlockType;
+import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.block.tileentity.TileEntity;
-import org.spongepowered.api.block.tileentity.carrier.Dispenser;
 import org.spongepowered.api.block.tileentity.carrier.TileEntityCarrier;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.property.block.MatterProperty;
 import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.entity.Entity;
-import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.explosive.PrimedTNT;
-import org.spongepowered.api.entity.living.Living;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.entity.MoveEntityEvent;
@@ -30,7 +27,6 @@ import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
 import org.spongepowered.api.scheduler.Task;
-import org.spongepowered.api.util.AABB;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.util.blockray.BlockRay;
 import org.spongepowered.api.util.blockray.BlockRayHit;
@@ -38,6 +34,7 @@ import org.spongepowered.api.world.BlockChangeFlags;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 import org.spongepowered.api.world.explosion.Explosion;
+import org.spongepowered.api.world.explosion.ResistanceCalculator;
 
 import java.util.*;
 
@@ -45,7 +42,7 @@ import static org.spongepowered.api.event.Order.LAST;
 
 public class TNTListener {
 
-    private final HashMap<PrimedTNT, Double> TNTTracking = new HashMap<>();
+    private final HashMap<PrimedTNT, Vector3d> TNTTracking = new HashMap<>();
     private final HashMap<PrimedTNT, Integer> TNTTracers = new HashMap<>();
     private final HashSet<PrimedTNT> tntControlList = new HashSet<>();
     private int tntControlTimer = 0;
@@ -67,22 +64,43 @@ public class TNTListener {
                     PrimedTNT primedTNT = (PrimedTNT) entity;
                     //Contact Explosives
 
-                    double velocity = primedTNT.getVelocity().lengthSquared();
+                    Vector3d velocity = primedTNT.getVelocity();
 
-                    if (!TNTTracking.containsKey(primedTNT) && velocity > 0.35) {
+                    if (!TNTTracking.containsKey(primedTNT) && velocity.lengthSquared() > 0.35) {
                         TNTTracking.put(primedTNT, velocity);
 
                     } else if (TNTTracking.containsKey(primedTNT)) {
-                        if (velocity < TNTTracking.get(primedTNT) / 10) {
+                        if (velocity.lengthSquared() < TNTTracking.get(primedTNT).lengthSquared() / 10) {
                             primedTNT.detonate();
                             TNTTracking.remove(primedTNT);
                             TNTTracers.remove(primedTNT);
 
                         } else {
+                            if (isShrapnel(primedTNT, velocity)) {
+                                primedTNT.offer(Keys.TICKS_REMAINING, 1);
+                            }
+
                             TNTTracking.put(primedTNT, velocity);
                         }
                     }
                 }));
+    }
+
+    private boolean isShrapnel(PrimedTNT primedTNT, Vector3d velocity) {
+
+        boolean x = velocity.getX() * velocity.getX() < (TNTTracking.get(primedTNT).getX() * TNTTracking.get(primedTNT).getX()) / 10
+                && (velocity.getY() * velocity.getY() > TNTTracking.get(primedTNT).getY() * TNTTracking.get(primedTNT).getY()
+                || velocity.getZ() * velocity.getZ() > TNTTracking.get(primedTNT).getZ() * TNTTracking.get(primedTNT).getZ());
+
+        boolean y = velocity.getY() * velocity.getY() < (TNTTracking.get(primedTNT).getY() * TNTTracking.get(primedTNT).getY()) / 10
+                && (velocity.getX() * velocity.getX() > TNTTracking.get(primedTNT).getX() * TNTTracking.get(primedTNT).getX()
+                || velocity.getZ() * velocity.getZ() > TNTTracking.get(primedTNT).getZ() * TNTTracking.get(primedTNT).getZ());
+
+        boolean z = velocity.getZ() * velocity.getZ() < (TNTTracking.get(primedTNT).getZ() * TNTTracking.get(primedTNT).getZ()) / 10
+                && (velocity.getY() * velocity.getY() > TNTTracking.get(primedTNT).getY() * TNTTracking.get(primedTNT).getY()
+                || velocity.getX() * velocity.getX() > TNTTracking.get(primedTNT).getX() * TNTTracking.get(primedTNT).getX());
+
+        return x || y || z;
     }
 
     @Listener
@@ -197,6 +215,35 @@ public class TNTListener {
     @Listener
     public void tntBlastCondenser(ExplosionEvent.Pre event) {
 
+        final ResistanceCalculator oldResistanceCalculator = event.getExplosion().getResistanceCalculator().get();
+        final ResistanceCalculator newResistanceCalculator = ((blockState, blockPosition, explosion) -> {
+
+            float resistance =
+                    (Settings.DurabilityOverride != null && Settings.DurabilityOverride.containsKey(blockState.getType()))
+                            ? Settings.DurabilityOverride.get(blockState.getType())
+                            : oldResistanceCalculator.calculateResistance(blockState, blockPosition, explosion);
+
+            //TODO: Add to config
+            for (Craft craft : CraftManager.getInstance().getCraftsFromLocation(new Location<>(event.getTargetWorld(), blockPosition))) {
+                float testNum = resistance * (1F + ((float) craft.getSize() / 50000F));
+
+                if (testNum > resistance) {
+                    resistance = testNum;
+                }
+            }
+
+            return resistance;
+        });
+
+        Explosion newExplosion = Explosion.builder()
+                .from(event.getExplosion())
+                .resistanceCalculator(newResistanceCalculator)
+                .build();
+
+        event.setExplosion(newExplosion);
+
+        //-------------------//
+
         if (Settings.Debug)
             Movecraft.getInstance().getLogger().info("Was BOOM: " + event.getExplosion().getRadius());
 
@@ -294,30 +341,6 @@ public class TNTListener {
         event.setExplosion(explosion);
     }
 
-    /*
-    //TODO: Waiting on PR
-    @Listener (order = LAST)
-    public void changeBlockResistance(ExplosionEvent.BlockExplosionResistance event) {
-
-        if (event.getDefaultExplosionResistance() != event.getExplosionResistance())
-            Movecraft.getInstance().getLogger().warn("Another plugin is altering the blast resistance of " + event.getBlockState().getType() + " and has been overwritten!");
-
-        if (Settings.DurabilityOverride != null && Settings.DurabilityOverride.containsKey(event.getBlockState().getType())) {
-            event.setExplosionResistance(Settings.DurabilityOverride.get(event.getBlockState().getType()));
-        }
-
-        //TODO: Add to craft config
-        for (Craft craft : CraftManager.getInstance().getCraftsInWorld(event.getTargetWorld())) {
-            if (craft.getHitBox().contains(event.getBlockPosition().toInt())) {
-                final float newResistance = event.getExplosionResistance() * (1F + ((float) craft.getSize() / 50000F));
-                Movecraft.getInstance().getLogger().info(String.valueOf((float) craft.getSize() / 50000F));
-                Movecraft.getInstance().getLogger().info(String.valueOf(newResistance));
-                event.setExplosionResistance(newResistance);
-                break;
-            }
-        }
-    }
-    */
 
     @Listener(order = LAST)
     public void explodeEvent(ExplosionEvent.Detonate event) {

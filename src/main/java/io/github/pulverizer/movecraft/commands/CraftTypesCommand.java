@@ -79,7 +79,6 @@ public class CraftTypesCommand implements CommandExecutor {
             craftType.getAllowedBlocks().forEach(blockType -> messages.add(Text.of("    " + blockType.getTranslation().get(src.getLocale()))));
 
             // send Output
-            src.sendMessage(Text.of("Craft Types:"));
             src.sendMessages(messages);
 
             return CommandResult.success();

@@ -10,7 +10,7 @@ public abstract class PlayerChunkMapMixin {
 
     @ModifyConstant(method = "setPlayerViewRadius", constant = @Constant(intValue = 32))
     private static int increaseViewLimit(int maxRadius) {
-        return 1024;
+        return 64;
     }
 
 }

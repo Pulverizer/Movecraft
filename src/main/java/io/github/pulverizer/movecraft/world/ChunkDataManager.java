@@ -198,7 +198,6 @@ public class ChunkDataManager {
     }
 
     public void destroyLeftovers() {
-        IBlockState airBlock = Blocks.AIR.getDefaultState();
 
         oldPositions.forEach(position -> {
             BlockPos blockPos = WorldUtils.locationToBlockPos(position);
@@ -212,8 +211,8 @@ public class ChunkDataManager {
             }
 
 
-            chunkSection.set(position.getX() & 15, position.getY() & 15, position.getZ() & 15, airBlock);
-            worldServer.notifyBlockUpdate(blockPos, airBlock, airBlock, 3);
+            chunkSection.set(position.getX() & 15, position.getY() & 15, position.getZ() & 15, Blocks.AIR.getDefaultState());
+            worldServer.notifyBlockUpdate(blockPos, Blocks.AIR.getDefaultState(), Blocks.AIR.getDefaultState(), 3);
             chunk.markDirty();
         });
     }

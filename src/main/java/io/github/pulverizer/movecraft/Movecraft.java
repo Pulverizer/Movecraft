@@ -1,9 +1,7 @@
 package io.github.pulverizer.movecraft;
 
 import com.google.inject.Inject;
-import io.github.pulverizer.movecraft.commands.CraftReportCommand;
-import io.github.pulverizer.movecraft.commands.CraftTypesCommand;
-import io.github.pulverizer.movecraft.commands.CrewCommand;
+import io.github.pulverizer.movecraft.commands.*;
 import io.github.pulverizer.movecraft.config.ConfigManager;
 import io.github.pulverizer.movecraft.craft.crew.CrewManager;
 import io.github.pulverizer.movecraft.listener.*;
@@ -109,12 +107,13 @@ public class Movecraft {
         this.getCommand("add").setExecutor(new RotateCommand());
         this.getCommand("cruise").setExecutor(new CruiseCommand());
         this.getCommand("manoverboard").setExecutor(new ManOverboardCommand());
-        this.getCommand("contacts").setExecutor(new ContactsCommand());
         this.getCommand("scuttle").setExecutor(new ScuttleCommand());*/
 
         CraftReportCommand.register();
         CrewCommand.register();
         CraftTypesCommand.register();
+        DockCommand.register();
+        ContactsCommand.register();
 
 
         Sponge.getEventManager().registerListeners(this, new InteractListener());
