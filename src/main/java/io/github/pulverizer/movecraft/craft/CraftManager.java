@@ -1,28 +1,28 @@
 package io.github.pulverizer.movecraft.craft;
 
 import com.flowpowered.math.vector.Vector3i;
-import com.google.common.collect.ImmutableSet;
 import io.github.pulverizer.movecraft.Movecraft;
 import io.github.pulverizer.movecraft.config.ConfigManager;
 import io.github.pulverizer.movecraft.config.CraftType;
 import io.github.pulverizer.movecraft.utils.HashHitBox;
-import io.github.pulverizer.movecraft.utils.MathUtils;
-import io.netty.util.internal.ConcurrentSet;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.scheduler.Task;
-import org.spongepowered.api.text.Text;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
-import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class CraftManager implements Iterable<Craft> {
+
     private static CraftManager ourInstance;
     private final Set<Craft> craftList = ConcurrentHashMap.newKeySet();
     private HashSet<CraftType> craftTypes;
@@ -31,7 +31,7 @@ public class CraftManager implements Iterable<Craft> {
     @Deprecated
     private final ConcurrentMap<Craft, Task> releaseEvents = new ConcurrentHashMap<>();
 
-    private static void initialize(){
+    private static void initialize() {
         ourInstance = new CraftManager();
     }
 
@@ -70,7 +70,9 @@ public class CraftManager implements Iterable<Craft> {
     }
 
     public static CraftManager getInstance() {
-        if (ourInstance == null) initialize();
+        if (ourInstance == null) {
+            initialize();
+        }
 
         return ourInstance;
     }
@@ -96,13 +98,17 @@ public class CraftManager implements Iterable<Craft> {
 
         // if its sinking, just remove the craft without notifying or checking
         this.craftList.remove(c);
-        if(c.getHitBox() != null && !c.getHitBox().isEmpty()) {
+        if (c.getHitBox() != null && !c.getHitBox().isEmpty()) {
             if (player != null) {
-                Movecraft.getInstance().getLogger().info(String.format(player.getName() + " has released a craft of type %s with size %d at coordinates : %d x , %d z", c.getType().getName(), c.getHitBox().size(), c.getHitBox().getMinX(), c.getHitBox().getMinZ()));
+                Movecraft.getInstance().getLogger().info(String
+                        .format(player.getName() + " has released a craft of type %s with size %d at coordinates : %d x , %d z",
+                                c.getType().getName(), c.getHitBox().size(), c.getHitBox().getMinX(), c.getHitBox().getMinZ()));
             } else {
-                Movecraft.getInstance().getLogger().info(String.format("NULL Player has released a craft of type %s with size %d at coordinates : %d x , %d z", c.getType().getName(), c.getHitBox().size(), c.getHitBox().getMinX(), c.getHitBox().getMinZ()));
+                Movecraft.getInstance().getLogger().info(String
+                        .format("NULL Player has released a craft of type %s with size %d at coordinates : %d x , %d z", c.getType().getName(),
+                                c.getHitBox().size(), c.getHitBox().getMinX(), c.getHitBox().getMinZ()));
             }
-        }else{
+        } else {
             Movecraft.getInstance().getLogger().warn("Releasing empty craft!");
         }
     }
@@ -113,21 +119,24 @@ public class CraftManager implements Iterable<Craft> {
 
     public Set<Craft> getCraftsInWorld(World world) {
         Set<Craft> crafts = new HashSet<>();
-        for(Craft c : this.craftList){
-            if(c.getWorld() == world)
+        for (Craft c : this.craftList) {
+            if (c.getWorld() == world) {
                 crafts.add(c);
+            }
         }
         return crafts;
     }
 
     public Craft getCraftByPlayer(UUID player) {
 
-        if (!Sponge.getServer().getPlayer(player).isPresent())
+        if (!Sponge.getServer().getPlayer(player).isPresent()) {
             return null;
+        }
 
         for (Craft craft : craftList) {
-            if (craft.isCrewMember(player))
+            if (craft.isCrewMember(player)) {
                 return craft;
+            }
         }
 
         return null;
@@ -135,8 +144,9 @@ public class CraftManager implements Iterable<Craft> {
 
     public Craft getCraftByUUID(UUID id) {
         for (Craft craft : craftList) {
-            if (craft.getId().equals(id))
+            if (craft.getId().equals(id)) {
                 return craft;
+            }
         }
 
         return null;
@@ -144,7 +154,7 @@ public class CraftManager implements Iterable<Craft> {
 
     @Deprecated
     public final void addReleaseTask(final Craft c) {
-        Task releaseTask = Task.builder().delayTicks(20*15).execute(player -> c.release(null)).submit(Movecraft.getInstance());
+        Task releaseTask = Task.builder().delayTicks(20 * 15).execute(player -> c.release(null)).submit(Movecraft.getInstance());
         releaseEvents.put(c, releaseTask);
 
     }
@@ -153,8 +163,9 @@ public class CraftManager implements Iterable<Craft> {
     public final void removeReleaseTask(final Craft c) {
         if (!c.crewIsEmpty()) {
             if (releaseEvents.containsKey(c)) {
-                if (releaseEvents.get(c) != null)
+                if (releaseEvents.get(c) != null) {
                     releaseEvents.get(c).cancel();
+                }
                 releaseEvents.remove(c);
             }
         }
@@ -186,7 +197,7 @@ public class CraftManager implements Iterable<Craft> {
         return returnedCraft;
     }
 
-    public boolean isEmpty(){
+    public boolean isEmpty() {
         return this.craftList.isEmpty();
     }
 

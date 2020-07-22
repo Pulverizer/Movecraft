@@ -11,9 +11,15 @@ import org.spongepowered.api.item.ItemTypes;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 final public class CraftType {
+
     private final boolean requireWaterContact;
     private final boolean canCruise;
     private final boolean canTeleport;
@@ -462,12 +468,13 @@ final public class CraftType {
         return cruiseOnPilotMaxMoves;
     }
 
+    public int getSmokeOnSinkQuantity() {
+        return smokeOnSinkQuantity;
+    }
+
     @Override
     public int hashCode() {
         return name.hashCode();
     }
 
-    public int getSmokeOnSinkQuantity() {
-        return smokeOnSinkQuantity;
-    }
 }

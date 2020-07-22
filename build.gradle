@@ -35,6 +35,7 @@ repositories {
 
 dependencies {
     compile 'org.spongepowered:spongeapi:7.3.0-SNAPSHOT'
+    compile 'org.spongepowered:spongecommon:1.12.2-7.2.4-SNAPSHOT:dev'
     compile 'org.spongepowered:mixin:0.8'
 }
 

@@ -222,6 +222,8 @@ public class Craft {
             toRemove.forEach(blockMap::remove);
 
             if (!type.getSpeedBlocks().isEmpty()) {
+                float newSpeedBlockEffect = 1;
+
                 for (Set<BlockType> blockTypes : type.getSpeedBlocks().keySet()) {
                     int count = 0;
 
@@ -229,8 +231,13 @@ public class Craft {
                         count += blockMap.containsKey(blockType) ? blockMap.get(blockType).size() : 0;
                     }
 
-                    speedBlockEffect = (float) ((count / hitBox.size()) * type.getSpeedBlocks().get(blockTypes));
+
+                    float effect = (float) count / hitBox.size();
+                    effect = (float) (effect / type.getSpeedBlocks().get(blockTypes));
+                    newSpeedBlockEffect = newSpeedBlockEffect * Math.min(effect, 1);
                 }
+
+                speedBlockEffect = 1 + (1 - newSpeedBlockEffect);
             }
 
             //TODO - Implement Exposed Speed Blocks

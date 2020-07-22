@@ -44,6 +44,7 @@ public class TNTListener {
 
     private final HashMap<PrimedTNT, Vector3d> TNTTracking = new HashMap<>();
     private final HashMap<PrimedTNT, Integer> TNTTracers = new HashMap<>();
+    private final HashSet<PrimedTNT> shrapnelControlList = new HashSet<>();
     private final HashSet<PrimedTNT> tntControlList = new HashSet<>();
     private int tntControlTimer = 0;
 
@@ -78,6 +79,7 @@ public class TNTListener {
                         } else {
                             if (isShrapnel(primedTNT, velocity)) {
                                 primedTNT.offer(Keys.TICKS_REMAINING, 1);
+                                shrapnelControlList.add(primedTNT);
                             }
 
                             TNTTracking.put(primedTNT, velocity);
@@ -215,35 +217,6 @@ public class TNTListener {
     @Listener
     public void tntBlastCondenser(ExplosionEvent.Pre event) {
 
-        final ResistanceCalculator oldResistanceCalculator = event.getExplosion().getResistanceCalculator().get();
-        final ResistanceCalculator newResistanceCalculator = ((blockState, blockPosition, explosion) -> {
-
-            float resistance =
-                    (Settings.DurabilityOverride != null && Settings.DurabilityOverride.containsKey(blockState.getType()))
-                            ? Settings.DurabilityOverride.get(blockState.getType())
-                            : oldResistanceCalculator.calculateResistance(blockState, blockPosition, explosion);
-
-            //TODO: Add to config
-            for (Craft craft : CraftManager.getInstance().getCraftsFromLocation(new Location<>(event.getTargetWorld(), blockPosition))) {
-                float testNum = resistance * (1F + ((float) craft.getSize() / 50000F));
-
-                if (testNum > resistance) {
-                    resistance = testNum;
-                }
-            }
-
-            return resistance;
-        });
-
-        Explosion newExplosion = Explosion.builder()
-                .from(event.getExplosion())
-                .resistanceCalculator(newResistanceCalculator)
-                .build();
-
-        event.setExplosion(newExplosion);
-
-        //-------------------//
-
         if (Settings.Debug)
             Movecraft.getInstance().getLogger().info("Was BOOM: " + event.getExplosion().getRadius());
 
@@ -286,6 +259,7 @@ public class TNTListener {
             Movecraft.getInstance().getLogger().info("Entity Count: " + entities.size());
 
         int tntFound = 0;
+        int shrapnelFound = 0;
         Vector3d explosionPosition = Vector3d.ZERO;
 
         for (Entity entity : entities) {
@@ -294,21 +268,26 @@ public class TNTListener {
 
             tnt.remove();
             tntControlList.add(tnt);
-            tntFound++;
+
+            if (shrapnelControlList.contains(tnt)) {
+                shrapnelFound++;
+            } else {
+                tntFound++;
+            }
+
+            shrapnelControlList.remove(tnt);
 
             explosionPosition = explosionPosition.add(tnt.getLocation().getPosition());
         }
 
         Location<World> explosionLocation  = new Location<>(event.getTargetWorld(), explosionPosition.div(tntFound));
 
-
-
         //30 breaks the water block it's in and has a large AoE, going to max out at 16.
-        int num16explosions = tntFound / 16;
-        tntFound = tntFound - (num16explosions * 16);
+        int power16Explosions = tntFound / 16;
+        tntFound = tntFound - (power16Explosions * 16);
 
         Explosion explosion;
-        for (int i = 0; i < num16explosions; i++) {
+        for (int i = 0; i < power16Explosions; i++) {
 
             if (Settings.Debug)
                 Movecraft.getInstance().getLogger().info("Should BOOM: 16");
@@ -326,16 +305,19 @@ public class TNTListener {
              event.getTargetWorld().triggerExplosion(explosion);
         }
 
+        float finalExplosion = Math.min((float) shrapnelFound / 4 + tntFound, 16);
+
         if (Settings.Debug)
-            Movecraft.getInstance().getLogger().info("Did BOOM: " + tntFound);
+            Movecraft.getInstance().getLogger().info(String.format("Did Boom: %.2f (%d, %.2f)", finalExplosion, tntFound,
+                    (float) shrapnelFound / 4));
 
         explosion = Explosion.builder()
                 .from(event.getExplosion())
                 .location(explosionLocation)
-                .radius(tntFound)
-                .knockback(tntFound)
+                .radius(finalExplosion)
+                .knockback(shrapnelFound + tntFound)
                 .randomness(0)
-                .resolution(tntFound * 2)
+                .resolution((int) finalExplosion)
                 .build();
 
         event.setExplosion(explosion);
@@ -456,7 +438,7 @@ public class TNTListener {
                             .shouldPlaySmoke(true)
                             .radius(size)
                             .resolution((int) (size * 2))
-                            .knockback(1)
+                            .knockback(size)
                             .canCauseFire(fireChargeCount > 0)
                             .build();
 

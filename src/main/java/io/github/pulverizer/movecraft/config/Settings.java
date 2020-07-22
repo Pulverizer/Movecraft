@@ -5,12 +5,14 @@ import com.google.common.reflect.TypeToken;
 import io.github.pulverizer.movecraft.Movecraft;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -39,7 +41,7 @@ public class Settings {
     public static boolean EnableCrewSigns = true;
     // TODO - Should we be overriding /home ?
     //public static boolean SetHomeToCrewSign = true;
-    public static Map<BlockType, Float> DurabilityOverride;
+    public static Map<BlockType, ArrayList<Double>> DurabilityOverride;
     public static HashSet<BlockType> DisableShadowBlocks;
     public static boolean ReleaseOnCrewDeath;
     public static int InviteTimeout;
@@ -93,10 +95,16 @@ public class Settings {
         Settings.DurabilityOverride = new HashMap<>();
 
         try {
-            Map<BlockType, Float> tempMap = mainConfigNode.getNode("DurabilityOverride").getValue(new TypeToken<Map<BlockType, Float>>() {});
-            if (tempMap != null)
-                for (Object blockType : tempMap.keySet().toArray())
-                    Settings.DurabilityOverride.put((BlockType) blockType, tempMap.get(blockType));
+            Map<BlockType, ArrayList<Double>> tempMap =
+                    mainConfigNode.getNode("DurabilityOverride").getValue(new TypeToken<Map<BlockType, ArrayList<Double>>>() {});
+
+            if (tempMap != null) {
+                tempMap.forEach((blockType, doubles) -> {
+                    if (doubles.size() >= 3) {
+                        Settings.DurabilityOverride.put(blockType, doubles);
+                    }
+                });
+            }
 
         } catch (ObjectMappingException e) {
             e.printStackTrace();
