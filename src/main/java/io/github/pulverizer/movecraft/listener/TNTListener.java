@@ -1,15 +1,15 @@
 package io.github.pulverizer.movecraft.listener;
 
+import static org.spongepowered.api.event.Order.LAST;
+
 import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.Movecraft;
 import io.github.pulverizer.movecraft.config.Settings;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
-import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
-import org.spongepowered.api.block.BlockState;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.block.tileentity.TileEntity;
 import org.spongepowered.api.block.tileentity.carrier.TileEntityCarrier;
@@ -34,11 +34,12 @@ import org.spongepowered.api.world.BlockChangeFlags;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 import org.spongepowered.api.world.explosion.Explosion;
-import org.spongepowered.api.world.explosion.ResistanceCalculator;
 
-import java.util.*;
-
-import static org.spongepowered.api.event.Order.LAST;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Random;
 
 public class TNTListener {
 
@@ -123,8 +124,11 @@ public class TNTListener {
                 if (player != null && player.getItemInHand(HandTypes.MAIN_HAND).get().getType() == Settings.PilotTool) {
 
                     Vector3d tntVelocity = primedTNT.getVelocity();
-                    double speed = tntVelocity.length(); // store the speed to add it back in later, since all the values we will be using are "normalized", IE: have a speed of 1
-                    tntVelocity = tntVelocity.normalize(); // you normalize it for comparison with the new direction to see if we are trying to steer too far
+                    double speed = tntVelocity
+                            .length(); // store the speed to add it back in later, since all the values we will be using are "normalized", IE: have
+                    // a speed of 1
+                    tntVelocity = tntVelocity
+                            .normalize(); // you normalize it for comparison with the new direction to see if we are trying to steer too far
                     BlockSnapshot targetBlock = null;
                     Optional<BlockRayHit<World>> blockRayHit = BlockRay
                             .from(player)
@@ -135,8 +139,10 @@ public class TNTListener {
                             .end();
 
                     if (blockRayHit.isPresent())
-                        // Target is Block :)
+                    // Target is Block :)
+                    {
                         targetBlock = blockRayHit.get().getLocation().createSnapshot();
+                    }
 
                     Vector3d targetVector;
                     if (targetBlock == null) { // the player is looking at nothing, shoot in that general direction
@@ -162,7 +168,8 @@ public class TNTListener {
                         tntVelocity = new Vector3d(tntVelocity.getX(), tntVelocity.getY(), targetVector.getZ());
                     }
                     tntVelocity = tntVelocity.mul(speed); // put the original speed back in, but now along a different trajectory
-                    tntVelocity = new Vector3d(tntVelocity.getX(), primedTNT.getVelocity().getY(), tntVelocity.getZ()); // you leave the original Y (or vertical axis) trajectory as it was
+                    tntVelocity = new Vector3d(tntVelocity.getX(), primedTNT.getVelocity().getY(),
+                            tntVelocity.getZ()); // you leave the original Y (or vertical axis) trajectory as it was
                     primedTNT.setVelocity(tntVelocity);
                 }
             }
@@ -171,10 +178,11 @@ public class TNTListener {
         //TNT Tracers
         if (Settings.TracerRateTicks != 0) {
             if (!TNTTracers.containsKey(primedTNT) && velocity > 0.25) {
-                TNTTracers.put(primedTNT, Sponge.getServer().getRunningTimeTicks() -  (int) Settings.TracerRateTicks);
+                TNTTracers.put(primedTNT, Sponge.getServer().getRunningTimeTicks() - (int) Settings.TracerRateTicks);
             }
 
-            if (TNTTracers.containsKey(primedTNT) && TNTTracers.get(primedTNT) < Sponge.getServer().getRunningTimeTicks() -  (int) Settings.TracerRateTicks) {
+            if (TNTTracers.containsKey(primedTNT)
+                    && TNTTracers.get(primedTNT) < Sponge.getServer().getRunningTimeTicks() - (int) Settings.TracerRateTicks) {
 
                 for (Player player : primedTNT.getWorld().getPlayers()) {
                     // is the TNT within the render distance of the player?
@@ -217,11 +225,13 @@ public class TNTListener {
     @Listener
     public void tntBlastCondenser(ExplosionEvent.Pre event) {
 
-        if (Settings.Debug)
+        if (Settings.Debug) {
             Movecraft.getInstance().getLogger().info("Was BOOM: " + event.getExplosion().getRadius());
+        }
 
-        if (!event.getExplosion().getSourceExplosive().isPresent() || !(event.getExplosion().getSourceExplosive().get() instanceof PrimedTNT))
+        if (!event.getExplosion().getSourceExplosive().isPresent() || !(event.getExplosion().getSourceExplosive().get() instanceof PrimedTNT)) {
             return;
+        }
 
         if (tntControlTimer < Sponge.getServer().getRunningTimeTicks()) {
             tntControlTimer = Sponge.getServer().getRunningTimeTicks();
@@ -237,26 +247,31 @@ public class TNTListener {
             return;
         }
 
-        Collection<Entity> entities = TNTTracking.containsKey(eventTNT) ? event.getTargetWorld().getNearbyEntities(tntLoc.getPosition(), 3) : event.getTargetWorld().getNearbyEntities(tntLoc.getPosition(), 1.9);
+        Collection<Entity> entities = TNTTracking.containsKey(eventTNT) ? event.getTargetWorld().getNearbyEntities(tntLoc.getPosition(), 3) :
+                event.getTargetWorld().getNearbyEntities(tntLoc.getPosition(), 1.9);
 
         entities.removeIf(entity -> {
 
-            if (!(entity instanceof PrimedTNT))
+            if (!(entity instanceof PrimedTNT)) {
                 return true;
+            }
 
             PrimedTNT tnt = (PrimedTNT) entity;
 
-            if (tnt.getFuseData().ticksRemaining().get() > eventTNT.getFuseData().ticksRemaining().get() + 1)
+            if (tnt.getFuseData().ticksRemaining().get() > eventTNT.getFuseData().ticksRemaining().get() + 1) {
                 return true;
+            }
 
-            if (tnt.getFuseData().ticksRemaining().get() < eventTNT.getFuseData().ticksRemaining().get() - 1)
+            if (tnt.getFuseData().ticksRemaining().get() < eventTNT.getFuseData().ticksRemaining().get() - 1) {
                 return true;
+            }
 
             return false;
         });
 
-        if (Settings.Debug)
+        if (Settings.Debug) {
             Movecraft.getInstance().getLogger().info("Entity Count: " + entities.size());
+        }
 
         int tntFound = 0;
         int shrapnelFound = 0;
@@ -280,7 +295,7 @@ public class TNTListener {
             explosionPosition = explosionPosition.add(tnt.getLocation().getPosition());
         }
 
-        Location<World> explosionLocation  = new Location<>(event.getTargetWorld(), explosionPosition.div(tntFound));
+        Location<World> explosionLocation = new Location<>(event.getTargetWorld(), explosionPosition.div(tntFound));
 
         //30 breaks the water block it's in and has a large AoE, going to max out at 16.
         int power16Explosions = tntFound / 16;
@@ -289,27 +304,29 @@ public class TNTListener {
         Explosion explosion;
         for (int i = 0; i < power16Explosions; i++) {
 
-            if (Settings.Debug)
+            if (Settings.Debug) {
                 Movecraft.getInstance().getLogger().info("Should BOOM: 16");
+            }
 
-             explosion = Explosion.builder()
-                     .from(event.getExplosion())
-                     .sourceExplosive(null)
-                     .location(explosionLocation)
-                     .radius(16)
-                     .knockback(16)
-                     .randomness(0)
-                     .resolution(32)
-                     .build();
+            explosion = Explosion.builder()
+                    .from(event.getExplosion())
+                    .sourceExplosive(null)
+                    .location(explosionLocation)
+                    .radius(16)
+                    .knockback(16)
+                    .randomness(0)
+                    .resolution(32)
+                    .build();
 
-             event.getTargetWorld().triggerExplosion(explosion);
+            event.getTargetWorld().triggerExplosion(explosion);
         }
 
         float finalExplosion = Math.min((float) shrapnelFound / 4 + tntFound, 16);
 
-        if (Settings.Debug)
+        if (Settings.Debug) {
             Movecraft.getInstance().getLogger().info(String.format("Did Boom: %.2f (%d, %.2f)", finalExplosion, tntFound,
                     (float) shrapnelFound / 4));
+        }
 
         explosion = Explosion.builder()
                 .from(event.getExplosion())
@@ -336,68 +353,80 @@ public class TNTListener {
 
                 for (Craft craft : CraftManager.getInstance().getCraftsInWorld(affectedLocation.getExtent())) {
 
-                    if (craft == null || !craft.getHitBox().contains(affectedLocation.getBlockX(), affectedLocation.getBlockY(), affectedLocation.getBlockZ()))
+                    if (craft == null || !craft.getHitBox()
+                            .contains(affectedLocation.getBlockX(), affectedLocation.getBlockY(), affectedLocation.getBlockZ())) {
                         continue;
+                    }
 
                     HashSet<Location<World>> blockList = new HashSet<>();
 
                     Location<World> relativeBlockPos = affectedLocation.getBlockRelative(Direction.NORTH);
 
-                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition()))
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
                         blockList.add(relativeBlockPos);
+                    }
 
                     relativeBlockPos = affectedLocation.getBlockRelative(Direction.WEST);
 
-                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition()))
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
                         blockList.add(relativeBlockPos);
+                    }
 
                     relativeBlockPos = affectedLocation.getBlockRelative(Direction.EAST);
 
-                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition()))
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
                         blockList.add(relativeBlockPos);
+                    }
 
                     relativeBlockPos = affectedLocation.getBlockRelative(Direction.SOUTH);
 
-                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition()))
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
                         blockList.add(relativeBlockPos);
+                    }
 
                     relativeBlockPos = affectedLocation.getBlockRelative(Direction.UP);
 
-                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition()))
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
                         blockList.add(relativeBlockPos);
+                    }
 
                     relativeBlockPos = affectedLocation.getBlockRelative(Direction.UP).getBlockRelative(Direction.NORTH);
 
-                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition()))
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
                         blockList.add(relativeBlockPos);
+                    }
 
                     relativeBlockPos = affectedLocation.getBlockRelative(Direction.UP).getBlockRelative(Direction.WEST);
 
-                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition()))
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
                         blockList.add(relativeBlockPos);
+                    }
 
                     relativeBlockPos = affectedLocation.getBlockRelative(Direction.UP).getBlockRelative(Direction.EAST);
 
-                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition()))
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
                         blockList.add(relativeBlockPos);
+                    }
 
                     relativeBlockPos = affectedLocation.getBlockRelative(Direction.UP).getBlockRelative(Direction.SOUTH);
 
-                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition()))
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
                         blockList.add(relativeBlockPos);
-
+                    }
 
 
                     //TODO: Can't seem to get Fluid Level???
                     // Test anti-spill
                     for (Location<World> testLoc : blockList) {
 
-                        if (testLoc.getProperty(MatterProperty.class).get().getValue() == MatterProperty.Matter.LIQUID && testLoc.getBlock().get(Keys.FLUID_LEVEL).isPresent()) {// && testLoc.get(Keys.FLUID_LEVEL).get() == 1) {
+                        if (testLoc.getProperty(MatterProperty.class).get().getValue() == MatterProperty.Matter.LIQUID && testLoc.getBlock()
+                                .get(Keys.FLUID_LEVEL).isPresent()) {// && testLoc.get(Keys.FLUID_LEVEL).get() == 1) {
                             Movecraft.getInstance().getLogger().info("Fluid Level: " + testLoc.getBlock().get(Keys.FLUID_LEVEL).get());
                             testLoc.restoreSnapshot(BlockTypes.AIR.getDefaultState().snapshotFor(testLoc), true, BlockChangeFlags.ALL);
                         }
 
-                        if (testLoc.getProperty(MatterProperty.class).isPresent() && testLoc.getProperty(MatterProperty.class).get().getValue() == MatterProperty.Matter.LIQUID) {
+                        if (testLoc.getProperty(MatterProperty.class).isPresent()
+                                && testLoc.getProperty(MatterProperty.class).get().getValue() == MatterProperty.Matter.LIQUID) {
                             event.getAffectedLocations().remove(affectedLocation);
                         }
                     }
@@ -420,11 +449,17 @@ public class TNTListener {
 
                 Inventory inventory = ((TileEntityCarrier) tileEntity.get()).getInventory();
 
-                float tntCount = inventory.query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.TNT), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.TNT_MINECART)).totalItems();
+                float tntCount =
+                        inventory.query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.TNT), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.TNT_MINECART))
+                                .totalItems();
                 float fireChargeCount = inventory.query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIRE_CHARGE)).totalItems();
-                float otherCount = inventory.query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIREWORK_CHARGE), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIREWORKS), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.GUNPOWDER)).totalItems();
+                float otherCount = inventory
+                        .query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIREWORK_CHARGE), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIREWORKS),
+                                QueryOperationTypes.ITEM_TYPE.of(ItemTypes.GUNPOWDER)).totalItems();
 
-                float chance = ((tntCount / (Settings.AmmoDetonationMultiplier * 32)) + (fireChargeCount / (Settings.AmmoDetonationMultiplier * 128)) + (otherCount / (Settings.AmmoDetonationMultiplier * 256)));
+                float chance =
+                        ((tntCount / (Settings.AmmoDetonationMultiplier * 32)) + (fireChargeCount / (Settings.AmmoDetonationMultiplier * 128)) + (
+                                otherCount / (Settings.AmmoDetonationMultiplier * 256)));
 
                 int diceRolled = new Random().nextInt(100);
 
@@ -449,8 +484,10 @@ public class TNTListener {
             ammoDetonation.put(event.getExplosion(), explosions);
         }
 
-        if (!event.getExplosion().getSourceExplosive().isPresent() || !(event.getExplosion().getSourceExplosive().get() instanceof PrimedTNT) || Settings.TracerRateTicks == 0)
+        if (!event.getExplosion().getSourceExplosive().isPresent() || !(event.getExplosion().getSourceExplosive().get() instanceof PrimedTNT)
+                || Settings.TracerRateTicks == 0) {
             return;
+        }
 
         Location<World> explosionLocation = event.getExplosion().getLocation();
 
