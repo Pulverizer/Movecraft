@@ -20,6 +20,7 @@ https://discord.gg/5Wj8yxy
 3. Clone this repository
 4. Open the SpongeVanilla repository in the IDE
 5. Add this repository as a project module using File > Project Structure > Project Settings > Modules > Add
+5. Add the module `Movecraft.main` as a module dependency of the `SpongeVanilla.main` module 
 5. Wait for the repository to be indexed
 5. Run the gradle task `setupDecompWorkspace`
 6. Refresh the gradle dependencies
