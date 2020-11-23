@@ -1,5 +1,6 @@
 package io.github.pulverizer.movecraft.listener;
 
+import com.flowpowered.math.imaginary.Quaterniond;
 import com.flowpowered.math.vector.Vector3d;
 import io.github.pulverizer.movecraft.config.Settings;
 import io.github.pulverizer.movecraft.craft.Craft;
@@ -35,7 +36,7 @@ public class FireballListener {
 
             Craft craft = CraftManager.getInstance().getCraftFromLocation(((Dispenser) fireball.getShooter()).getLocation());
 
-            if (craft != null) {
+            if (craft != null && craft.getType().allowAADirectors()) {
 
                 Player player = craft.getAADirectorFor(fireball);
 
@@ -50,8 +51,7 @@ public class FireballListener {
                         Optional<BlockRayHit<World>> blockRayHit = BlockRay
                                 .from(player)
                                 .distanceLimit((player.getViewDistance() + 1) * 16)
-                                .skipFilter(hit -> CraftManager.getInstance().getTransparentBlocks().contains(hit.getLocation().getBlockType()))
-                                .stopFilter(BlockRay.allFilter())
+                                .select(hit -> !CraftManager.getInstance().getTransparentBlocks().contains(hit.getLocation().getBlockType()))
                                 .build()
                                 .end();
 
@@ -64,7 +64,8 @@ public class FireballListener {
                         if (targetBlock == null) {
 
                             // the player is looking at nothing, shoot in that general direction
-                            targetVector = player.getHeadRotation();
+                            final Vector3d rotation = player.getRotation();
+                            targetVector = Quaterniond.fromAxesAnglesDeg(rotation.getX(), -rotation.getY(), rotation.getZ()).getDirection();
 
                         } else {
 

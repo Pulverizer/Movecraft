@@ -1,8 +1,8 @@
 package io.github.pulverizer.movecraft.listener;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.spongepowered.api.event.Order.LAST;
 
+import com.flowpowered.math.imaginary.Quaterniond;
 import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.Movecraft;
@@ -167,23 +167,22 @@ public class TNTListener {
         double velocity = primedTNT.getVelocity().lengthSquared();
 
         //Cannon Directors
-        //TODO - Check that craft type allows cannon directors
         if (velocity > 0.25 && !tracerTNT.containsKey(primedTNT)) {
-            Craft c = CraftManager.getInstance().fastNearestCraftToLoc(primedTNT.getLocation());
+            Craft craft = CraftManager.getInstance().fastNearestCraftToLoc(primedTNT.getLocation());
 
             //TODO - make it use the spawning Dispenser location to check against craft hitbox
 
-            if (c != null) {
-                Player player = c.getCannonDirectorFor(primedTNT);
+            if (craft != null && craft.getType().allowCannonDirectors()) {
+                Player player = craft.getCannonDirectorFor(primedTNT);
 
                 if (player != null && player.getItemInHand(HandTypes.MAIN_HAND).get().getType() == Settings.PilotTool) {
 
                     Vector3d tntVelocity = primedTNT.getVelocity();
-                    double speed = tntVelocity
-                            .length(); // store the speed to add it back in later, since all the values we will be using are "normalized", IE: have
+                    double speed = tntVelocity.length();
+                    // store the speed to add it back in later, since all the values we will be using are "normalized", IE: have
                     // a speed of 1
-                    tntVelocity = tntVelocity
-                            .normalize(); // you normalize it for comparison with the new direction to see if we are trying to steer too far
+                    tntVelocity = tntVelocity.normalize();
+                    // you normalize it for comparison with the new direction to see if we are trying to steer too far
                     BlockSnapshot targetBlock = null;
                     Optional<BlockRayHit<World>> blockRayHit = BlockRay
                             .from(player)
@@ -198,9 +197,12 @@ public class TNTListener {
                     }
 
                     Vector3d targetVector;
-                    if (targetBlock == null) { // the player is looking at nothing, shoot in that general direction
-                        targetVector = player.getHeadRotation();
-                    } else { // shoot directly at the block the player is looking at (IE: with convergence)
+                    if (targetBlock == null) {
+                        // the player is looking at nothing, shoot in that general direction
+                        final Vector3d rotation = player.getRotation();
+                        targetVector = Quaterniond.fromAxesAnglesDeg(rotation.getX(), -rotation.getY(), rotation.getZ()).getDirection();
+                    } else {
+                        // shoot directly at the block the player is looking at (IE: with convergence)
                         targetVector = targetBlock.getLocation().get().getPosition().sub(primedTNT.getLocation().getPosition());
                         targetVector = targetVector.normalize();
                     }
