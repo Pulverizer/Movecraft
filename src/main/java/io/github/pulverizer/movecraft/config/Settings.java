@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+//TODO - Switch to getters / setters
 public class Settings {
     public static boolean Debug = false;
     public static String LOCALE;
@@ -26,7 +27,7 @@ public class Settings {
     public static int SilhouetteBlockCount = 20;
     public static double SinkRateTicks = 20.0;
     public static double SinkCheckTicks = 100.0;
-    public static double TracerRateTicks = 5.0;
+    public static int TracerRateTicks = 5;
     public static boolean ProtectPilotedCrafts = false;
     public static boolean DisableSpillProtection = false;
     public static boolean RequireCreateSignPerm = false;
@@ -79,7 +80,7 @@ public class Settings {
 
 
         Settings.SinkCheckTicks = mainConfigNode.getNode("SinkCheckTicks").getDouble(100.0);
-        Settings.TracerRateTicks = mainConfigNode.getNode("TracerRateTicks").getDouble(5.0);
+        Settings.TracerRateTicks = mainConfigNode.getNode("TracerRateTicks").getInt(5);
         Settings.ManOverBoardTimeout = mainConfigNode.getNode("ManOverBoardTimeout").getInt(30);
         Settings.SilhouetteViewDistance = mainConfigNode.getNode("SilhouetteViewDistance").getInt(200);
         Settings.SilhouetteBlockCount = mainConfigNode.getNode("SilhouetteBlockCount").getInt(20);

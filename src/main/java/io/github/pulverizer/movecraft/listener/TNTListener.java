@@ -1,5 +1,6 @@
 package io.github.pulverizer.movecraft.listener;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.spongepowered.api.event.Order.LAST;
 
 import com.flowpowered.math.vector.Vector3d;
@@ -38,13 +39,14 @@ import org.spongepowered.api.world.explosion.Explosion;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
 public class TNTListener {
 
-    private final HashMap<PrimedTNT, Vector3d> TNTTracking = new HashMap<>();
-    private final HashMap<PrimedTNT, Integer> TNTTracers = new HashMap<>();
+    private final HashMap<PrimedTNT, Vector3d> trackedTNT = new HashMap<>();
+    private final HashMap<PrimedTNT, Integer> tracerTNT = new HashMap<>();
     private final HashSet<PrimedTNT> shrapnelControlList = new HashSet<>();
     private final HashSet<PrimedTNT> tntControlList = new HashSet<>();
     private int tntControlTimer = 0;
@@ -54,8 +56,14 @@ public class TNTListener {
     public TNTListener() {
         Task.builder()
                 .intervalTicks(1)
-                .execute(this::processContactExplosives)
+                .execute(this::tntTasks)
                 .submit(Movecraft.getInstance());
+    }
+
+    private void tntTasks() {
+        processContactExplosives();
+        processTracers();
+        cleanData();
     }
 
     private void processContactExplosives() {
@@ -68,14 +76,14 @@ public class TNTListener {
 
                     Vector3d velocity = primedTNT.getVelocity();
 
-                    if (!TNTTracking.containsKey(primedTNT) && velocity.lengthSquared() > 0.35) {
-                        TNTTracking.put(primedTNT, velocity);
+                    if (!trackedTNT.containsKey(primedTNT) && velocity.lengthSquared() > 0.35) {
+                        trackedTNT.put(primedTNT, velocity);
 
-                    } else if (TNTTracking.containsKey(primedTNT)) {
-                        if (velocity.lengthSquared() < TNTTracking.get(primedTNT).lengthSquared() / 10) {
+                    } else if (trackedTNT.containsKey(primedTNT)) {
+                        if (velocity.lengthSquared() < trackedTNT.get(primedTNT).lengthSquared() / 10) {
                             primedTNT.detonate();
-                            TNTTracking.remove(primedTNT);
-                            TNTTracers.remove(primedTNT);
+                            trackedTNT.remove(primedTNT);
+                            tracerTNT.remove(primedTNT);
 
                         } else {
                             if (isShrapnel(primedTNT, velocity)) {
@@ -83,7 +91,7 @@ public class TNTListener {
                                 shrapnelControlList.add(primedTNT);
                             }
 
-                            TNTTracking.put(primedTNT, velocity);
+                            trackedTNT.put(primedTNT, velocity);
                         }
                     }
                 }));
@@ -91,19 +99,66 @@ public class TNTListener {
 
     private boolean isShrapnel(PrimedTNT primedTNT, Vector3d velocity) {
 
-        boolean x = velocity.getX() * velocity.getX() < (TNTTracking.get(primedTNT).getX() * TNTTracking.get(primedTNT).getX()) / 10
-                && (velocity.getY() * velocity.getY() > TNTTracking.get(primedTNT).getY() * TNTTracking.get(primedTNT).getY()
-                || velocity.getZ() * velocity.getZ() > TNTTracking.get(primedTNT).getZ() * TNTTracking.get(primedTNT).getZ());
+        boolean x = velocity.getX() * velocity.getX() < (trackedTNT.get(primedTNT).getX() * trackedTNT.get(primedTNT).getX()) / 10
+                && (velocity.getY() * velocity.getY() > trackedTNT.get(primedTNT).getY() * trackedTNT.get(primedTNT).getY()
+                || velocity.getZ() * velocity.getZ() > trackedTNT.get(primedTNT).getZ() * trackedTNT.get(primedTNT).getZ());
 
-        boolean y = velocity.getY() * velocity.getY() < (TNTTracking.get(primedTNT).getY() * TNTTracking.get(primedTNT).getY()) / 10
-                && (velocity.getX() * velocity.getX() > TNTTracking.get(primedTNT).getX() * TNTTracking.get(primedTNT).getX()
-                || velocity.getZ() * velocity.getZ() > TNTTracking.get(primedTNT).getZ() * TNTTracking.get(primedTNT).getZ());
+        boolean y = velocity.getY() * velocity.getY() < (trackedTNT.get(primedTNT).getY() * trackedTNT.get(primedTNT).getY()) / 10
+                && (velocity.getX() * velocity.getX() > trackedTNT.get(primedTNT).getX() * trackedTNT.get(primedTNT).getX()
+                || velocity.getZ() * velocity.getZ() > trackedTNT.get(primedTNT).getZ() * trackedTNT.get(primedTNT).getZ());
 
-        boolean z = velocity.getZ() * velocity.getZ() < (TNTTracking.get(primedTNT).getZ() * TNTTracking.get(primedTNT).getZ()) / 10
-                && (velocity.getY() * velocity.getY() > TNTTracking.get(primedTNT).getY() * TNTTracking.get(primedTNT).getY()
-                || velocity.getX() * velocity.getX() > TNTTracking.get(primedTNT).getX() * TNTTracking.get(primedTNT).getX());
+        boolean z = velocity.getZ() * velocity.getZ() < (trackedTNT.get(primedTNT).getZ() * trackedTNT.get(primedTNT).getZ()) / 10
+                && (velocity.getY() * velocity.getY() > trackedTNT.get(primedTNT).getY() * trackedTNT.get(primedTNT).getY()
+                || velocity.getX() * velocity.getX() > trackedTNT.get(primedTNT).getX() * trackedTNT.get(primedTNT).getX());
 
         return x || y || z;
+    }
+
+    private void processTracers() {
+        HashSet<Vector3i> tracers = new HashSet<>();
+
+        for (Map.Entry<PrimedTNT, Integer> entry : tracerTNT.entrySet()) {
+            PrimedTNT primedTNT = entry.getKey();
+
+            if (entry.getValue() < Sponge.getServer().getRunningTimeTicks() - Settings.TracerRateTicks) {
+                final World world = primedTNT.getWorld();
+                final Vector3i loc = primedTNT.getLocation().getBlockPosition();
+
+                boolean invalid = false;
+                for (Vector3i pos : tracers) {
+                    if (pos.distance(loc) <= 3) {
+                        invalid = true;
+                        break;
+                    }
+                }
+
+                if (invalid) {
+                    continue;
+                }
+
+                tracers.add(loc);
+
+                // place a cobweb to look like smoke,
+                // place it a little later so it isn't right
+                // in the middle of the volley
+                Task.builder()
+                        .delayTicks(5)
+                        .execute(() -> world.sendBlockChange(loc, BlockTypes.WEB.getDefaultState()))
+                        .submit(Movecraft.getInstance());
+
+                // then remove it
+                Task.builder()
+                        .delayTicks(65)
+                        .execute(() -> world.resetBlockChange(loc))
+                        .submit(Movecraft.getInstance());
+            }
+        }
+    }
+
+    private void cleanData() {
+        //Clean up any exploded TNT from Tracking
+        trackedTNT.keySet().removeIf(tnt -> tnt.getFuseData().ticksRemaining().get() <= 0);
+        tracerTNT.keySet().removeIf(tnt -> tnt.getFuseData().ticksRemaining().get() <= 0);
     }
 
     @Listener
@@ -113,7 +168,7 @@ public class TNTListener {
 
         //Cannon Directors
         //TODO - Check that craft type allows cannon directors
-        if (velocity > 0.25 && !TNTTracers.containsKey(primedTNT)) {
+        if (velocity > 0.25 && !tracerTNT.containsKey(primedTNT)) {
             Craft c = CraftManager.getInstance().fastNearestCraftToLoc(primedTNT.getLocation());
 
             //TODO - make it use the spawning Dispenser location to check against craft hitbox
@@ -133,14 +188,12 @@ public class TNTListener {
                     Optional<BlockRayHit<World>> blockRayHit = BlockRay
                             .from(player)
                             .distanceLimit((player.getViewDistance() + 1) * 16)
-                            .skipFilter(hit -> CraftManager.getInstance().getTransparentBlocks().contains(hit.getLocation().getBlockType()))
-                            .stopFilter(BlockRay.allFilter())
+                            .select(hit -> !CraftManager.getInstance().getTransparentBlocks().contains(hit.getLocation().getBlockType()))
                             .build()
                             .end();
 
-                    if (blockRayHit.isPresent())
-                    // Target is Block :)
-                    {
+                    if (blockRayHit.isPresent()) {
+                        // Target is Block :)
                         targetBlock = blockRayHit.get().getLocation().createSnapshot();
                     }
 
@@ -176,50 +229,9 @@ public class TNTListener {
         }
 
         //TNT Tracers
-        if (Settings.TracerRateTicks != 0) {
-            if (!TNTTracers.containsKey(primedTNT) && velocity > 0.25) {
-                TNTTracers.put(primedTNT, Sponge.getServer().getRunningTimeTicks() - (int) Settings.TracerRateTicks);
-            }
-
-            if (TNTTracers.containsKey(primedTNT)
-                    && TNTTracers.get(primedTNT) < Sponge.getServer().getRunningTimeTicks() - (int) Settings.TracerRateTicks) {
-
-                for (Player player : primedTNT.getWorld().getPlayers()) {
-                    // is the TNT within the render distance of the player?
-                    long maxDistSquared = player.getViewDistance() * 16;
-                    maxDistSquared = maxDistSquared - 16;
-                    maxDistSquared = maxDistSquared * maxDistSquared;
-
-                    if (player.getLocation().getBlockPosition().distanceSquared(primedTNT.getLocation().getBlockPosition()) < maxDistSquared) {
-                        // we
-                        // use
-                        // squared
-                        // because
-                        // its
-                        // faster
-                        final Vector3i loc = primedTNT.getLocation().getBlockPosition();
-                        final Player fp = player;
-                        // then make a cobweb to look like smoke,
-                        // place it a little later so it isn't right
-                        // in the middle of the volley
-                        Task.builder()
-                                .delayTicks(5)
-                                .execute(() -> fp.sendBlockChange(loc, BlockTypes.WEB.getDefaultState()))
-                                .submit(Movecraft.getInstance());
-
-                        // then remove it
-                        Task.builder()
-                                .delayTicks(65)
-                                .execute(() -> fp.resetBlockChange(loc))
-                                .submit(Movecraft.getInstance());
-                    }
-                }
-            }
+        if (Settings.TracerRateTicks != 0 && !tracerTNT.containsKey(primedTNT) && velocity > 0.25) {
+            tracerTNT.put(primedTNT, Sponge.getServer().getRunningTimeTicks() - Settings.TracerRateTicks);
         }
-
-        //Clean up any exploded TNT from Tracking
-        TNTTracking.keySet().removeIf(tnt -> tnt.getFuseData().ticksRemaining().get() <= 0);
-        TNTTracers.keySet().removeIf(tnt -> tnt.getFuseData().ticksRemaining().get() <= 0);
     }
 
     @Listener
@@ -247,7 +259,7 @@ public class TNTListener {
             return;
         }
 
-        Collection<Entity> entities = TNTTracking.containsKey(eventTNT) ? event.getTargetWorld().getNearbyEntities(tntLoc.getPosition(), 3) :
+        Collection<Entity> entities = trackedTNT.containsKey(eventTNT) ? event.getTargetWorld().getNearbyEntities(tntLoc.getPosition(), 3) :
                 event.getTargetWorld().getNearbyEntities(tntLoc.getPosition(), 1.9);
 
         entities.removeIf(entity -> {
@@ -489,37 +501,28 @@ public class TNTListener {
             return;
         }
 
-        Location<World> explosionLocation = event.getExplosion().getLocation();
+        Vector3i explosionPos = event.getExplosion().getLocation().getBlockPosition();
 
-        for (Player player : event.getTargetWorld().getPlayers()) {
+        // place a glowstone to look like the explosion, place it a little later so it isn't right in the middle of the volley
+        Task.builder()
+                .delayTicks(8)
+                .execute(() -> event.getTargetWorld().sendBlockChange(explosionPos, BlockTypes.GLOWSTONE.getDefaultState()))
+                .submit(Movecraft.getInstance());
 
-            double renderDistance = (player.getViewDistance() + 1) * 16;
+        // then remove it
+        Task.builder()
+                .delayTicks(108)
+                .execute(() -> event.getTargetWorld().resetBlockChange(explosionPos))
+                .submit(Movecraft.getInstance());
 
-            // is the TNT within the view distance (rendered world) of the player, yet further than 60 blocks?
-            if (player.getPosition().distance(explosionLocation.getPosition()) < renderDistance) {
-                final Location<World> location = explosionLocation;
-                final Player finalisedPlayer = player;
 
-                // make a glowstone to look like the explosion, place it a little later so it isn't right in the middle of the volley
-                Task.builder()
-                        .delayTicks(5)
-                        .execute(() -> finalisedPlayer.sendBlockChange(location.getBlockPosition(), BlockTypes.GLOWSTONE.getDefaultState()))
-                        .submit(Movecraft.getInstance());
-
-                // then remove it
-                Task.builder()
-                        .delayTicks(105)
-                        .execute(() -> finalisedPlayer.resetBlockChange(location.getBlockPosition()))
-                        .submit(Movecraft.getInstance());
-            }
-        }
     }
 
     @Listener(order = LAST)
     public void explosionPOST(ExplosionEvent.Post event, @Getter("getExplosion") Explosion explosion) {
         if (ammoDetonation.containsKey(explosion)) {
             ammoDetonation.get(explosion).forEach(ammoExplosion -> ammoExplosion.getLocation().getExtent().triggerExplosion(ammoExplosion));
-            ammoDetonation.clear();
+            ammoDetonation.remove(explosion);
         }
     }
 }

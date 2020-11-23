@@ -10,6 +10,9 @@
       <artifact name="movecraft:jar" />
     </artifacts-to-build>
   </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="c90e9d30-d6b2-408e-a161-c8f0d91ad7dd" name="Default" comment="" />
     <option name="SHOW_DIALOG" value="false" />
@@ -33,7 +36,12 @@
         </task>
         <projects_view>
           <tree_state>
-            <expand />
+            <expand>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="movecraft" type="f1a62948:ProjectNode" />
+              </path>
+            </expand>
             <select />
           </tree_state>
         </projects_view>
@@ -53,15 +61,10 @@
   <component name="ProjectCodeStyleSettingsMigration">
     <option name="version" value="1" />
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="width" value="1950" />
-    <option name="height" value="1400" />
-  </component>
   <component name="ProjectId" id="1Oj9CebDlooIx3jTbDkfhhbmZFR" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
-    <option name="showExcludedFiles" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
@@ -69,10 +72,18 @@
     <property name="GenerateAntBuildDialog.enableUiFormCompile" value="true" />
     <property name="GenerateAntBuildDialog.forceTargetJdk" value="true" />
     <property name="GenerateAntBuildDialog.outputFileNameProperty" value="movecraft" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
     <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1558473831327" />
     <property name="full.screen.before.presentation.mode" value="false" />
     <property name="last_directory_selection" value="$PROJECT_DIR$/src/main/java" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="project.structure.last.edited" value="Project" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.25942856" />
@@ -140,7 +151,7 @@
       </method>
     </configuration>
     <configuration name="Debug Server" type="JarApplication" singleton="true">
-      <option name="JAR_PATH" value="C:/Games/MC Debug/forge-1.12.2-14.23.4.2705-universal.jar" />
+      <option name="JAR_PATH" value="$PROJECT_DIR$/../../../../Games/MC Debug/forge-1.12.2-14.23.4.2705-universal.jar" />
       <option name="WORKING_DIRECTORY" value="C:\Games\MC Debug" />
       <option name="ALTERNATIVE_JRE_PATH" />
       <method v="2">
@@ -162,6 +173,7 @@
       <item itemvalue="JAR Application.Debug Server" />
     </list>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="project-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -172,6 +184,9 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1533116316106</updated>
+      <workItem from="1606006581472" duration="1324000" />
+      <workItem from="1606151113936" duration="653000" />
+      <workItem from="1606154757230" duration="24000" />
     </task>
     <servers />
   </component>
@@ -183,6 +198,9 @@
       <are-packages-shown value="true" />
       <is-autoscroll-to-source value="true" />
     </todo-panel>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
     <ignored-roots>

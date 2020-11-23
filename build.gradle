@@ -36,9 +36,9 @@ repositories {
 dependencies {
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter', version: '5.7.0'
     testCompile group: 'org.mockito', name: 'mockito-core', version: '3.+'
-    compile 'org.spongepowered:spongeapi:7.3.0-SNAPSHOT'
-    compile 'org.spongepowered:spongecommon:1.12.2-7.2.4-SNAPSHOT:dev'
-    compile 'org.spongepowered:mixin:0.8'
+    compile 'org.spongepowered:spongeapi:7.4.0-SNAPSHOT'
+    compile 'org.spongepowered:spongecommon:1.12.2-7.3.1-SNAPSHOT:dev'
+    compile 'org.spongepowered:mixin:0.8.2'
 }
 
 minecraft {
