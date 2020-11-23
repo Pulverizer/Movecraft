@@ -68,14 +68,6 @@ import java.util.Set;
 @Mixin(value = net.minecraft.world.Explosion.class, priority = 1001)
 public abstract class ExplosionMixin_Movecraft {
 
-    /* Failing to compile
-    @Dynamic(mixin = org.spongepowered.common.mixin.core.world.ExplosionMixin.class) @Shadow(remap = false) private boolean impl$shouldBreakBlocks;
-    @Dynamic(mixin = org.spongepowered.common.mixin.core.world.ExplosionMixin.class) @Shadow(remap = false) private boolean impl$shouldDamageEntities;
-    @Dynamic(mixin = org.spongepowered.common.mixin.core.world.ExplosionMixin.class) @Shadow(remap = false) private int impl$resolution;
-    @Dynamic(mixin = org.spongepowered.common.mixin.core.world.ExplosionMixin.class) @Shadow(remap = false) private float impl$randomness;
-    @Dynamic(mixin = org.spongepowered.common.mixin.core.world.ExplosionMixin.class) @Shadow(remap = false) private double impl$knockback;
-    */
-
     @Shadow @Final private List<BlockPos> affectedBlockPositions;
     @Shadow @Final private Map<EntityPlayer, Vec3d> playerKnockbackMap;
     @Shadow @Final private Random random;
@@ -92,7 +84,8 @@ public abstract class ExplosionMixin_Movecraft {
      * and allows for maximal capability.
      *
      * @author BernardisGood - July 17th, 2020
-     * @reason Movecraft - Configurable blast resistances for armour
+     * @reason Movecraft - Configurable blast resistances for armour, all entities knockback reduced by obstructions, and players also benefit from
+     * the knockback reducing effects of the Blast Protection enchantment
      */
     @Overwrite
     public void doExplosionA() {
@@ -270,7 +263,8 @@ public abstract class ExplosionMixin_Movecraft {
                         entity.attackEntityFrom(
                                 DamageSource.causeExplosionDamage((net.minecraft.world.Explosion) (Object) this),
                                 (float) ((int) ((d10 * d10 + d10) / 2.0D * 7.0D * (double) f3 + 1.0D)));
-                        double d11 = 1.0D;
+                        //Movecraft - all entities should have knockback reduced by obstructions
+                        double d11 = d10;
 
                         if (entity instanceof EntityLivingBase) {
                             d11 = EnchantmentProtection.getBlastDamageReduction((EntityLivingBase) entity, d10);
@@ -285,10 +279,11 @@ public abstract class ExplosionMixin_Movecraft {
                             final EntityPlayer entityplayer = (EntityPlayer) entity;
 
                             if (!entityplayer.isSpectator() && (!entityplayer.isCreative() || !entityplayer.capabilities.isFlying)) {
+                                //Movecraft - players should also benefit from Blast Protection enchant reducing knockback
                                 this.playerKnockbackMap.put(entityplayer,
-                                        new Vec3d(d5 * d10 * ((ExplosionBridge) this).bridge$getKnockback(),
-                                                d7 * d10 * ((ExplosionBridge) this).bridge$getKnockback(),
-                                                d9 * d10 * ((ExplosionBridge) this).bridge$getKnockback()));
+                                        new Vec3d(d5 * d11 * ((ExplosionBridge) this).bridge$getKnockback(),
+                                                d7 * d11 * ((ExplosionBridge) this).bridge$getKnockback(),
+                                                d9 * d11 * ((ExplosionBridge) this).bridge$getKnockback()));
                                 //Sponge End
                             }
                         }
