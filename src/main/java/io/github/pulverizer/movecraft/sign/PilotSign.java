@@ -22,13 +22,13 @@ public class PilotSign {
             return;
         }
 
-        event.setCancelled(true);
-
         if(event instanceof InteractBlockEvent.Primary){
             CrewManager.getInstance().resetRole(player);
             return;
         }
 
         CrewManager.getInstance().setPilot(player);
+
+        event.setCancelled(true);
     }
 }

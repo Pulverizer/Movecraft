@@ -31,13 +31,13 @@ public final class CannonDirectorSign {
             return;
         }
 
-        event.setCancelled(true);
-
         if(event instanceof InteractBlockEvent.Primary) {
             CrewManager.getInstance().resetRole(player);
             return;
         }
 
         CrewManager.getInstance().addCannonDirector(player);
+
+        event.setCancelled(true);
     }
 }

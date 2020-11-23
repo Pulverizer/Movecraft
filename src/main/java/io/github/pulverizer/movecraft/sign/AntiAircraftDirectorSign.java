@@ -30,13 +30,13 @@ public class AntiAircraftDirectorSign {
             return;
         }
 
-        event.setCancelled(true);
-
         if (event instanceof InteractBlockEvent.Primary) {
             CrewManager.getInstance().resetRole(player);
             return;
         }
 
         CrewManager.getInstance().addAADirector(player);
+
+        event.setCancelled(true);
     }
 }

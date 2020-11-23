@@ -24,13 +24,13 @@ public class RepairmanSign {
             return;
         }
 
-        event.setCancelled(true);
-
         if (event instanceof InteractBlockEvent.Primary) {
             CrewManager.getInstance().resetRole(player);
             return;
         }
 
         CrewManager.getInstance().addRepairman(player);
+
+        event.setCancelled(true);
     }
 }

@@ -27,13 +27,13 @@ public class LoaderSign {
             return;
         }
 
-        event.setCancelled(true);
-
         if (event instanceof InteractBlockEvent.Primary) {
             CrewManager.getInstance().resetRole(player);
             return;
         }
 
         CrewManager.getInstance().addLoader(player);
+
+        event.setCancelled(true);
     }
 }

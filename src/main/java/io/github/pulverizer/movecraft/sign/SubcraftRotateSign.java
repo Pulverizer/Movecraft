@@ -62,7 +62,6 @@ public final class SubcraftRotateSign {
         String craftTypeStr = sign.lines().get(1).toPlain().toLowerCase();
         CraftType type = CraftManager.getInstance().getCraftTypeFromString(craftTypeStr);
         if (type == null) {
-            event.setCancelled(true);
             return;
         }
         if (lines.get(2).toPlain().equalsIgnoreCase("") && lines.get(3).toPlain().equalsIgnoreCase("")) {
@@ -73,7 +72,6 @@ public final class SubcraftRotateSign {
 
         if (!player.hasPermission("movecraft." + craftTypeStr + ".crew.command") && (type.requiresSpecificPerms() || !player.hasPermission("movecraft.crew.command"))) {
             player.sendMessage(Text.of("Insufficient Permissions"));
-            event.setCancelled(true);
             return;
         }
 
@@ -88,13 +86,11 @@ public final class SubcraftRotateSign {
         if(craft != null) {
             if (craft.isProcessing()) {
                 player.sendMessage(Text.of("Parent Craft is busy!"));
-                event.setCancelled(true);
                 return;
             }
 
             if (!player.hasPermission("movecraft." + craft.getType().getName().toLowerCase() + ".rotatesubcraft") && (craft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.rotatesubcraft"))) {
                 player.sendMessage(Text.of("Insufficient Permissions"));
-                event.setCancelled(true);
                 return;
             }
 
@@ -121,8 +117,6 @@ public final class SubcraftRotateSign {
                             .execute(() -> subCraft.release(player))
                             .submit(Movecraft.getInstance()); })
                 .submit(Movecraft.getInstance());
-
-        event.setCancelled(true);
     }
 
 }
