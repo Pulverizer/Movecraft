@@ -157,8 +157,8 @@ public class TNTListener {
 
     private void cleanData() {
         //Clean up any exploded TNT from Tracking
-        trackedTNT.keySet().removeIf(tnt -> tnt.getFuseData().ticksRemaining().get() <= 0);
-        tracerTNT.keySet().removeIf(tnt -> tnt.getFuseData().ticksRemaining().get() <= 0);
+        trackedTNT.keySet().removeIf(Entity::isRemoved);
+        tracerTNT.keySet().removeIf(Entity::isRemoved);
     }
 
     @Listener
