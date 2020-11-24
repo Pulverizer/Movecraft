@@ -91,7 +91,7 @@ public abstract class ExplosionMixin_Movecraft {
     public void doExplosionA() {
         // Sponge Start - If the explosion should not break blocks, don't bother calculating it
         if (((ExplosionBridge) this).bridge$getShouldDamageBlocks()) {
-            final Set<BlockPos> set = Sets.<BlockPos>newHashSet();
+            final Set<BlockPos> set = Sets.newHashSet();
 
             for (int j = 0; j < ((ExplosionBridge) this).bridge$getResolution(); ++j) {
                 for (int k = 0; k < ((ExplosionBridge) this).bridge$getResolution(); ++k) {
@@ -101,9 +101,9 @@ public abstract class ExplosionMixin_Movecraft {
                                 || k == 0 || k == ((ExplosionBridge) this).bridge$getResolution() - 1
                                 || l == 0 || l == ((ExplosionBridge) this).bridge$getResolution() - 1) {
 
-                            double d0 = (double) ((float) j / (float) (((ExplosionBridge) this).bridge$getResolution() - 1) * 2.0F - 1.0F);
-                            double d1 = (double) ((float) k / (float) (((ExplosionBridge) this).bridge$getResolution() - 1) * 2.0F - 1.0F);
-                            double d2 = (double) ((float) l / (float) (((ExplosionBridge) this).bridge$getResolution() - 1) * 2.0F - 1.0F);
+                            double d0 = ((float) j / (float) (((ExplosionBridge) this).bridge$getResolution() - 1) * 2.0F - 1.0F);
+                            double d1 = ((float) k / (float) (((ExplosionBridge) this).bridge$getResolution() - 1) * 2.0F - 1.0F);
+                            double d2 = ((float) l / (float) (((ExplosionBridge) this).bridge$getResolution() - 1) * 2.0F - 1.0F);
                             final double d3 = Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
                             d0 = d0 / d3;
                             d1 = d1 / d3;
@@ -128,7 +128,7 @@ public abstract class ExplosionMixin_Movecraft {
 
                                     if (Settings.DurabilityOverride != null && Settings.DurabilityOverride.containsKey(blockType)) {
                                         resistance = Settings.DurabilityOverride.get(blockType).get(0);
-                                        System.out.println(String.format("%s : %.2f", blockType.getName(), resistance));
+                                        System.out.printf("%s : %.2f%n", blockType.getName(), resistance);
 
                                     } else {
                                         resistance = this.exploder != null
@@ -197,7 +197,7 @@ public abstract class ExplosionMixin_Movecraft {
         // Sponge Start - Check if this explosion should damage entities
         final List<Entity> list = ((ExplosionBridge) this).bridge$getShouldDamageEntities()
                 ? this.world.getEntitiesWithinAABBExcludingEntity(this.exploder,
-                new AxisAlignedBB((double) k1, (double) i2, (double) j2, (double) l1, (double) i1, (double) j1))
+                new AxisAlignedBB(k1, i2, j2, l1, i1, j1))
                 : Collections.emptyList();
         // Now we can throw our Detonate Event
         if (ShouldFire.EXPLOSION_EVENT_DETONATE) {
@@ -252,13 +252,13 @@ public abstract class ExplosionMixin_Movecraft {
                     double d5 = entity.posX - this.x;
                     double d7 = entity.posY + (double) entity.getEyeHeight() - this.y;
                     double d9 = entity.posZ - this.z;
-                    final double d13 = (double) MathHelper.sqrt(d5 * d5 + d7 * d7 + d9 * d9);
+                    final double d13 = MathHelper.sqrt(d5 * d5 + d7 * d7 + d9 * d9);
 
                     if (d13 != 0.0D) {
                         d5 = d5 / d13;
                         d7 = d7 / d13;
                         d9 = d9 / d13;
-                        final double d14 = (double) this.world.getBlockDensity(vec3d, entity.getEntityBoundingBox());
+                        final double d14 = this.world.getBlockDensity(vec3d, entity.getEntityBoundingBox());
                         final double d10 = (1.0D - d12) * d14;
                         entity.attackEntityFrom(
                                 DamageSource.causeExplosionDamage((net.minecraft.world.Explosion) (Object) this),

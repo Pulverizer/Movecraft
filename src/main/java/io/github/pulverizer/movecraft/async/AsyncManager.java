@@ -157,10 +157,6 @@ public class AsyncManager implements Runnable {
                     break;
             }
 
-            if (craft.getType().getCruiseOnPilot()) {
-                dy = craft.getType().getCruiseOnPilotVertMove();
-            }
-
             craft.translate(new Vector3i(dx, dy, dz));
         }
     }

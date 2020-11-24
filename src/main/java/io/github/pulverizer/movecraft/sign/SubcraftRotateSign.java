@@ -64,6 +64,7 @@ public final class SubcraftRotateSign {
         if (type == null) {
             return;
         }
+
         if (lines.get(2).toPlain().equalsIgnoreCase("") && lines.get(3).toPlain().equalsIgnoreCase("")) {
             lines.set(2, Text.of("_\\ /_"));
             lines.set(3, Text.of("/ \\"));
@@ -96,7 +97,7 @@ public final class SubcraftRotateSign {
 
             craft.setProcessing(true); // prevent the parent craft from moving or updating until the subcraft is done
 
-            //TODO: This is bad practice! Never assume anything!
+            //TODO - This is bad practice! Never assume anything!
             Craft finalCraft = craft;
             Task.builder()
                     .delayTicks(10)

@@ -352,12 +352,15 @@ public class DetectionTask extends AsyncTask {
                     } else {
                         fail("Craft is already being controlled by another player.");
                     }
+
                     break;
                 }
 
-                if (craft.getType().limitToParentHitBox()) {
+                // Removing to fix issue #63 (Subcrafts disconnecting from parent craft)
+                // Can't remember why this exists...
+                //if (craft.getType().limitToParentHitBox()) {
                     craft.setIsSubCraft();
-                }
+                //}
 
                 return testCraft;
             }
@@ -376,10 +379,6 @@ public class DetectionTask extends AsyncTask {
             if (!originCraft.isCrewMember(player.getUniqueId())) {
                 fail("You are not in the crew of the parent craft.");
                 return;
-            }
-
-            if (originCraft.isProcessing()) {
-                fail("Parent craft is busy!");
             }
 
             if (!craft.isSubCraft()) {

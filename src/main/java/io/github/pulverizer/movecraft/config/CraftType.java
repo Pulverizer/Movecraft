@@ -8,6 +8,7 @@ import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
+import org.spongepowered.api.util.Direction;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,7 +49,7 @@ final public class CraftType {
     private final int minHeightLimit;
     private final int maxHeightLimit;
     private final int maxHeightAboveGround;
-    private final int cruiseOnPilotVertMove;
+    private final Direction cruiseOnPilotVertDirection;
     private final int maxStaticMove;
     private final int cruiseSkipBlocks;
     private final int vertCruiseSkipBlocks;
@@ -126,7 +127,17 @@ final public class CraftType {
         canCruise = configNode.getNode("canCruise").getBoolean(false);
         canTeleport = configNode.getNode("canTeleport").getBoolean(false);
         cruiseOnPilot = configNode.getNode("cruiseOnPilot").getBoolean(false);
-        cruiseOnPilotVertMove = configNode.getNode("cruiseOnPilotVertMove").getInt(0);
+
+        int temp = configNode.getNode("cruiseOnPilotVertDirection").getInt(0);
+
+        if (temp < 0) {
+            cruiseOnPilotVertDirection = Direction.DOWN;
+        } else if (temp > 0) {
+            cruiseOnPilotVertDirection = Direction.UP;
+        } else {
+            cruiseOnPilotVertDirection = Direction.NONE;
+        }
+
         allowVerticalMovement = configNode.getNode("allowVerticalMovement").getBoolean(true);
         rotateAtMidpoint = configNode.getNode("rotateAtMidpoint").getBoolean(false);
         allowHorizontalMovement = configNode.getNode("allowHorizontalMovement").getBoolean(true);
@@ -275,8 +286,8 @@ final public class CraftType {
         return cruiseOnPilot;
     }
 
-    public int getCruiseOnPilotVertMove() {
-        return cruiseOnPilotVertMove;
+    public Direction getCruiseOnPilotVertDirection() {
+        return cruiseOnPilotVertDirection;
     }
 
     public boolean allowVerticalMovement() {

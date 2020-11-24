@@ -3,16 +3,17 @@ package io.github.pulverizer.movecraft.async;
 import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.Movecraft;
-import io.github.pulverizer.movecraft.enums.Rotation;
+import io.github.pulverizer.movecraft.config.Settings;
 import io.github.pulverizer.movecraft.craft.Craft;
+import io.github.pulverizer.movecraft.craft.CraftManager;
+import io.github.pulverizer.movecraft.enums.Rotation;
 import io.github.pulverizer.movecraft.event.CraftRotateEvent;
 import io.github.pulverizer.movecraft.map_updater.MapUpdateManager;
-import io.github.pulverizer.movecraft.utils.*;
-import io.github.pulverizer.movecraft.config.Settings;
-import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.map_updater.update.CraftRotateCommand;
 import io.github.pulverizer.movecraft.map_updater.update.EntityUpdateCommand;
 import io.github.pulverizer.movecraft.map_updater.update.UpdateCommand;
+import io.github.pulverizer.movecraft.utils.HashHitBox;
+import io.github.pulverizer.movecraft.utils.MathUtils;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
@@ -32,6 +33,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RotationTask extends AsyncTask {
+
     private final Vector3i originPoint;
     private final Rotation rotation;
     private final World world;
@@ -53,8 +55,9 @@ public class RotationTask extends AsyncTask {
     protected void execute() throws InterruptedException {
 
         // Check if task is valid
-        if (oldHitBox.isEmpty() || craft.isDisabled())
+        if (oldHitBox.isEmpty() || craft.isDisabled()) {
             return;
+        }
 
         // Use some fuel if needed
         double fuelBurnRate = getCraft().getType().getFuelBurnRate();
@@ -70,14 +73,13 @@ public class RotationTask extends AsyncTask {
 
         // Check if failed
         if (failed()) {
-            craft.setProcessing(false);
             return;
         }
 
         // Call event
         CraftRotateEvent event = new CraftRotateEvent(craft, oldHitBox, newHitBox);
         Sponge.getEventManager().post(event);
-        if(event.isCancelled()){
+        if (event.isCancelled()) {
             fail(event.getFailMessage());
             return;
         }
@@ -91,36 +93,11 @@ public class RotationTask extends AsyncTask {
         // if you rotated a subcraft, update the parent with the new blocks
         if (craft.isSubCraft()) {
             // also find the furthest extent from center and notify the player of the new direction
-            int farthestX = 0;
-            int farthestZ = 0;
-            for (Vector3i loc : newHitBox) {
-                if (Math.abs(loc.getX() - originPoint.getX()) > Math.abs(farthestX))
-                    farthestX = loc.getX() - originPoint.getX();
-                if (Math.abs(loc.getZ() - originPoint.getZ()) > Math.abs(farthestZ))
-                    farthestZ = loc.getZ() - originPoint.getZ();
-            }
-
-            Player pilot = getNotificationPlayer().orElse(null);
-
-            if (pilot != null) {
-                if (Math.abs(farthestX) > Math.abs(farthestZ)) {
-                    if (farthestX > 0) {
-                        pilot.sendMessage(Text.of("The farthest extent now faces East"));
-                    } else {
-                        pilot.sendMessage(Text.of("The farthest extent now faces West"));
-                    }
-                } else if (Math.abs(farthestX) < Math.abs(farthestZ)) {
-                    if (farthestZ > 0) {
-                        pilot.sendMessage(Text.of("The farthest extent now faces South"));
-                    } else {
-                        pilot.sendMessage(Text.of("The farthest extent now faces North"));
-                    }
-                }
-            }
+            notifyPlayerOfNewDirection();
 
             Set<Craft> craftsInWorld = CraftManager.getInstance().getCraftsInWorld(getCraft().getWorld());
             for (Craft craft : craftsInWorld) {
-                if (newHitBox.intersects(craft.getHitBox()) && craft != getCraft()) {
+                if (oldHitBox.intersects(craft.getHitBox()) && craft != getCraft()) {
                     craft.getHitBox().removeAll(oldHitBox);
                     craft.getHitBox().addAll(newHitBox);
                     break;
@@ -135,28 +112,35 @@ public class RotationTask extends AsyncTask {
         //prevents torpedo and rocket passengers
         if (craft.getType().getMoveEntities() && !craft.isSinking()) {
 
-            if (Settings.Debug)
+            if (Settings.Debug) {
                 Movecraft.getInstance().getLogger().info("Craft moves Entities.");
+            }
 
             AtomicBoolean processedEntities = new AtomicBoolean(false);
 
             Task.builder()
                     .execute(() -> {
-                        for(Entity entity : craft.getWorld().getIntersectingEntities(new AABB(oldHitBox.getMinX() - 0.5, oldHitBox.getMinY() - 0.5, oldHitBox.getMinZ() - 0.5, oldHitBox.getMaxX() + 1.5, oldHitBox.getMaxY() + 1.5, oldHitBox.getMaxZ()+1.5))){
+                        for (Entity entity : craft.getWorld().getIntersectingEntities(
+                                new AABB(oldHitBox.getMinX() - 0.5, oldHitBox.getMinY() - 0.5, oldHitBox.getMinZ() - 0.5, oldHitBox.getMaxX() + 1.5,
+                                        oldHitBox.getMaxY() + 1.5, oldHitBox.getMaxZ() + 1.5))) {
 
-                            if (entity.getType() == EntityTypes.PLAYER || entity.getType() == EntityTypes.PRIMED_TNT || entity.getType() == EntityTypes.ITEM || !craft.getType().onlyMovePlayers()) {
+                            if (entity.getType() == EntityTypes.PLAYER || entity.getType() == EntityTypes.PRIMED_TNT
+                                    || entity.getType() == EntityTypes.ITEM || !craft.getType().onlyMovePlayers()) {
 
                                 Location<World> adjustedPLoc = entity.getLocation().sub(tOP);
 
                                 double[] rotatedCoords = MathUtils.rotateVecNoRound(rotation, adjustedPLoc.getX(), adjustedPLoc.getZ());
                                 float newYaw = rotation == Rotation.CLOCKWISE ? 90F : -90F;
-                                EntityUpdateCommand eUp = new EntityUpdateCommand(entity, new Vector3d(rotatedCoords[0] + tOP.getX(), entity.getLocation().getY(), rotatedCoords[1] + tOP.getZ()), newYaw);
+                                EntityUpdateCommand eUp = new EntityUpdateCommand(entity,
+                                        new Vector3d(rotatedCoords[0] + tOP.getX(), entity.getLocation().getY(), rotatedCoords[1] + tOP.getZ()),
+                                        newYaw);
                                 updates.add(eUp);
 
                                 if (Settings.Debug) {
                                     Movecraft.getInstance().getLogger().info("Submitting Entity Update: " + entity.getType().getName());
-                                    if (entity instanceof Item)
+                                    if (entity instanceof Item) {
                                         Movecraft.getInstance().getLogger().info("Item Type: " + ((Item) entity).getItemType().getName());
+                                    }
                                 }
                             }
                         }
@@ -166,16 +150,17 @@ public class RotationTask extends AsyncTask {
                     .submit(Movecraft.getInstance());
 
 
-
             synchronized (this) {
-                while (!processedEntities.get()) this.wait(1);
+                while (!processedEntities.get()) {
+                    this.wait(1);
+                }
             }
         }
     }
 
     private void checkCraftObstructed() {
-        for(Vector3i originalLocation : oldHitBox){
-            Vector3i newLocation = MathUtils.rotateVec(rotation,originalLocation.sub(originPoint)).add(originPoint);
+        for (Vector3i originalLocation : oldHitBox) {
+            Vector3i newLocation = MathUtils.rotateVec(rotation, originalLocation.sub(originPoint)).add(originPoint);
             newHitBox.add(newLocation);
 
             if (oldHitBox.contains(newLocation)) {
@@ -198,6 +183,37 @@ public class RotationTask extends AsyncTask {
         }
     }
 
+    private void notifyPlayerOfNewDirection() {
+        int farthestX = 0;
+        int farthestZ = 0;
+        for (Vector3i loc : newHitBox) {
+            if (Math.abs(loc.getX() - originPoint.getX()) > Math.abs(farthestX)) {
+                farthestX = loc.getX() - originPoint.getX();
+            }
+            if (Math.abs(loc.getZ() - originPoint.getZ()) > Math.abs(farthestZ)) {
+                farthestZ = loc.getZ() - originPoint.getZ();
+            }
+        }
+
+        Player pilot = getNotificationPlayer().orElse(null);
+
+        if (pilot != null) {
+            if (Math.abs(farthestX) > Math.abs(farthestZ)) {
+                if (farthestX > 0) {
+                    pilot.sendMessage(Text.of("The farthest extent now faces East"));
+                } else {
+                    pilot.sendMessage(Text.of("The farthest extent now faces West"));
+                }
+            } else if (Math.abs(farthestX) < Math.abs(farthestZ)) {
+                if (farthestZ > 0) {
+                    pilot.sendMessage(Text.of("The farthest extent now faces South"));
+                } else {
+                    pilot.sendMessage(Text.of("The farthest extent now faces North"));
+                }
+            }
+        }
+    }
+
     @Override
     public void postProcess() {
         if (failed()) {
@@ -207,16 +223,6 @@ public class RotationTask extends AsyncTask {
 
             MapUpdateManager.getInstance().scheduleUpdates(updates);
         }
-    }
-
-    // TODO - Why does this method exist?
-    //  Also it isn't correct!
-    private static HitBox rotateHitBox(HitBox hitBox, Vector3i originPoint, Rotation rotation){
-        MutableHitBox output = new HashHitBox();
-        for(Vector3i location : hitBox){
-            output.add(MathUtils.rotateVec(rotation, originPoint.sub(originPoint)).add(originPoint));
-        }
-        return output;
     }
 
     @Override
@@ -234,10 +240,6 @@ public class RotationTask extends AsyncTask {
 
     public Rotation getRotation() {
         return rotation;
-    }
-
-    public boolean getIsSubCraft() {
-        return craft.isSubCraft();
     }
 
     private boolean checkChests(BlockType mBlock, Vector3i newLoc) {
