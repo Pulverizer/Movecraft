@@ -32,15 +32,25 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TranslationTask extends AsyncTask {
+
     //TODO: Move to config.
-    private static final ImmutableSet<BlockType> FALL_THROUGH_BLOCKS = ImmutableSet.of(BlockTypes.AIR, BlockTypes.FLOWING_WATER, BlockTypes.FLOWING_LAVA, BlockTypes.TALLGRASS, BlockTypes.YELLOW_FLOWER, BlockTypes.RED_FLOWER, BlockTypes.BROWN_MUSHROOM, BlockTypes.RED_MUSHROOM, BlockTypes.TORCH, BlockTypes.FIRE, BlockTypes.REDSTONE_WIRE, BlockTypes.WHEAT, BlockTypes.STANDING_SIGN, BlockTypes.LADDER, BlockTypes.WALL_SIGN, BlockTypes.LEVER, BlockTypes.LIGHT_WEIGHTED_PRESSURE_PLATE, BlockTypes.HEAVY_WEIGHTED_PRESSURE_PLATE, BlockTypes.STONE_PRESSURE_PLATE, BlockTypes.WOODEN_PRESSURE_PLATE, BlockTypes.UNLIT_REDSTONE_TORCH, BlockTypes.REDSTONE_TORCH, BlockTypes.STONE_BUTTON, BlockTypes.SNOW_LAYER, BlockTypes.REEDS, BlockTypes.FENCE, BlockTypes.ACACIA_FENCE, BlockTypes.BIRCH_FENCE, BlockTypes.DARK_OAK_FENCE, BlockTypes.JUNGLE_FENCE, BlockTypes.NETHER_BRICK_FENCE, BlockTypes.SPRUCE_FENCE, BlockTypes.UNPOWERED_REPEATER, BlockTypes.POWERED_REPEATER, BlockTypes.WATERLILY, BlockTypes.CARROTS, BlockTypes.POTATOES, BlockTypes.WOODEN_BUTTON, BlockTypes.CARPET);
+    private static final ImmutableSet<BlockType> FALL_THROUGH_BLOCKS = ImmutableSet
+            .of(BlockTypes.AIR, BlockTypes.FLOWING_WATER, BlockTypes.FLOWING_LAVA, BlockTypes.TALLGRASS, BlockTypes.YELLOW_FLOWER,
+                    BlockTypes.RED_FLOWER, BlockTypes.BROWN_MUSHROOM, BlockTypes.RED_MUSHROOM, BlockTypes.TORCH, BlockTypes.FIRE,
+                    BlockTypes.REDSTONE_WIRE, BlockTypes.WHEAT, BlockTypes.STANDING_SIGN, BlockTypes.LADDER, BlockTypes.WALL_SIGN, BlockTypes.LEVER,
+                    BlockTypes.LIGHT_WEIGHTED_PRESSURE_PLATE, BlockTypes.HEAVY_WEIGHTED_PRESSURE_PLATE, BlockTypes.STONE_PRESSURE_PLATE,
+                    BlockTypes.WOODEN_PRESSURE_PLATE, BlockTypes.UNLIT_REDSTONE_TORCH, BlockTypes.REDSTONE_TORCH, BlockTypes.STONE_BUTTON,
+                    BlockTypes.SNOW_LAYER, BlockTypes.REEDS, BlockTypes.FENCE, BlockTypes.ACACIA_FENCE, BlockTypes.BIRCH_FENCE,
+                    BlockTypes.DARK_OAK_FENCE, BlockTypes.JUNGLE_FENCE, BlockTypes.NETHER_BRICK_FENCE, BlockTypes.SPRUCE_FENCE,
+                    BlockTypes.UNPOWERED_REPEATER, BlockTypes.POWERED_REPEATER, BlockTypes.WATERLILY, BlockTypes.CARROTS, BlockTypes.POTATOES,
+                    BlockTypes.WOODEN_BUTTON, BlockTypes.CARPET);
 
     private Vector3i displacement;
     private HashHitBox newHitBox;
     private final HashHitBox oldHitBox;
     private boolean collisionExplosion = false;
     private final Collection<UpdateCommand> updates = new HashSet<>();
-    private World world;
+    private final World world;
 
     private final List<BlockType> harvestBlocks = craft.getType().getHarvestBlocks();
     private final HashSet<Vector3i> harvestedBlocks = new HashSet<>();
@@ -136,7 +146,9 @@ public class TranslationTask extends AsyncTask {
                     testY -= 1;
 
                     // TODO - Probably won't work in newer versions with kelp, etc
-                    if (craft.getWorld().getBlockType(middle.getX(), testY, middle.getZ()) != BlockTypes.AIR && (!craft.getType().getCanHoverOverWater() || craft.getWorld().getBlockType(middle.getX(), testY, middle.getZ()) != BlockTypes.WATER))
+                    if (craft.getWorld().getBlockType(middle.getX(), testY, middle.getZ()) != BlockTypes.AIR && (
+                            !craft.getType().getCanHoverOverWater()
+                                    || craft.getWorld().getBlockType(middle.getX(), testY, middle.getZ()) != BlockTypes.WATER))
                         break;
                 }
 
@@ -175,7 +187,8 @@ public class TranslationTask extends AsyncTask {
             //prevent chests collision
             BlockType oldMaterial = world.getBlockType(oldLocation);
             if ((oldMaterial.equals(BlockTypes.CHEST) || oldMaterial.equals(BlockTypes.TRAPPED_CHEST)) && checkChests(oldMaterial, newLocation)) {
-                fail(String.format("Translation Failed - Craft is obstructed" + " @ %d,%d,%d,%s", newLocation.getX(), newLocation.getY(), newLocation.getZ(), craft.getWorld().getBlockType(newLocation).toString()));
+                fail(String.format("Translation Failed - Craft is obstructed" + " @ %d,%d,%d,%s", newLocation.getX(), newLocation.getY(),
+                        newLocation.getZ(), craft.getWorld().getBlockType(newLocation).toString()));
                 return true;
             }
 
@@ -188,8 +201,8 @@ public class TranslationTask extends AsyncTask {
 
             boolean ignoreBlock = false;
             // air never obstructs anything (changed 4/18/2017 to prevent drilling machines)
-            if (craft.getWorld().getBlockType(oldLocation).equals(BlockTypes.AIR) && blockObstructed) {
-                ignoreBlock = true;
+            if (blockObstructed && craft.getWorld().getBlockType(oldLocation).equals(BlockTypes.AIR)) {
+                blockObstructed = false;
             }
 
             if (blockObstructed && harvestBlocks.contains(testMaterial)) {
@@ -198,23 +211,54 @@ public class TranslationTask extends AsyncTask {
                     blockObstructed = false;
                     harvestedBlocks.add(newLocation);
                 }
+
             }
 
             if (blockObstructed) {
-                if (!craft.isSinking() && craft.getType().getCollisionExplosion() == 0.0F) {
-                    fail(String.format("Translation Failed - Craft is obstructed" + " @ %d,%d,%d,%s", newLocation.getX(), newLocation.getY(), newLocation.getZ(), testMaterial.getName()));
+                if (Math.abs(displacement.getX()) > 1 || Math.abs(displacement.getY()) > 1 || Math.abs(displacement.getZ()) > 1) {
+                    int x = displacement.getX();
+                    int y = displacement.getY();
+                    int z = displacement.getZ();
+
+                    if (x < 0) {
+                        x++;
+                    } else if (x > 0) {
+                        x--;
+                    }
+
+                    if (y < 0) {
+                        y++;
+                    } else if (y > 0) {
+                        y--;
+                    }
+
+                    if (z < 0) {
+                        z++;
+                    } else if (z > 0) {
+                        z--;
+                    }
+
+                    displacement = new Vector3i(x, y, z);
+                    newHitBox.clear();
+                    harvestedBlocks.clear();
+                    return craftObstructed();
+
+                } else if (!craft.isSinking() && craft.getType().getCollisionExplosion() == 0.0F) {
+                    fail(String.format("Translation Failed - Craft is obstructed" + " @ %d,%d,%d,%s", newLocation.getX(), newLocation.getY(),
+                            newLocation.getZ(), testMaterial.getName()));
                     return true;
                 }
+
                 collisionBox.add(newLocation);
+
             } else {
-                if (!ignoreBlock) {
-                    newHitBox.add(newLocation);
-                }
+                newHitBox.add(newLocation);
             } //END OF: if (blockObstructed)
         }
 
         return false;
     }
+
 
     private boolean checkChests(BlockType mBlock, Vector3i newLoc) {
         for (Vector3i shift : SHIFTS) {

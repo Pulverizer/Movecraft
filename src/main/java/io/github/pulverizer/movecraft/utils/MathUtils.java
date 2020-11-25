@@ -10,7 +10,7 @@ import org.spongepowered.api.world.World;
 public class MathUtils {
 
     /**
-     * checks if the given bukkit <code>location</code> is within <code>hitbox</code>
+     * checks if the given <code>location</code> is within <code>hitbox</code>
      * @param hitBox the bounding box to check within
      * @param location the location to check
      * @return True if the player is within the given bounding box
@@ -89,5 +89,24 @@ public class MathUtils {
         }
 
         return new double[]{newX, newZ};
+    }
+
+    /**
+     * Calculates the directional difference between two coordinates.
+     *
+     * For example:
+     * {@code ((5, 10, -6), (-4, 5, -4)) -> (-9, -5, 2) }
+     *
+     * @param origin The origin coordinate
+     * @param target The destination or target coordinate
+     * @return A vector of the difference
+     */
+    public static Vector3i vector3iDirectionalDiff(Vector3i origin, Vector3i target) {
+
+        final int x = -(origin.getX() - target.getX());
+        final int y = -(origin.getY() - target.getY());
+        final int z = -(origin.getZ() - target.getZ());
+
+        return new Vector3i(x, y, z);
     }
 }

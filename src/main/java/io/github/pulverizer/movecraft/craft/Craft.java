@@ -12,6 +12,7 @@ import io.github.pulverizer.movecraft.enums.Rotation;
 import io.github.pulverizer.movecraft.event.CraftSinkEvent;
 import io.github.pulverizer.movecraft.utils.ChatUtils;
 import io.github.pulverizer.movecraft.utils.HashHitBox;
+import io.github.pulverizer.movecraft.utils.MathUtils;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockType;
@@ -762,16 +763,11 @@ public class Craft {
 
     public void setCruising(Direction vertical, Direction horizontal) {
 
-        if (vertical != Direction.UP
-                && vertical != Direction.NONE
-                && vertical != Direction.DOWN) {
+        if (vertical != Direction.NONE && !vertical.isUpright()) {
             return;
         }
-        if (horizontal != Direction.NONE
-                && horizontal != Direction.NORTH
-                && horizontal != Direction.WEST
-                && horizontal != Direction.SOUTH
-                && horizontal != Direction.EAST) {
+
+        if (horizontal != Direction.NONE && !horizontal.isCardinal()) {
             return;
         }
 
@@ -942,7 +938,8 @@ public class Craft {
                 commanderName,
                 contact.getInitialSize(),
                 (int) hitBox.getMidPoint().toFloat().distance(contact.getHitBox().getMidPoint().toFloat()),
-                ChatUtils.abbreviateDirection(Direction.getClosest(hitBox.getMidPoint().sub(contact.getHitBox().getMidPoint()).toDouble())));
+                ChatUtils.abbreviateDirection(Direction.getClosest(MathUtils.vector3iDirectionalDiff(hitBox.getMidPoint(),
+                        contact.getHitBox().getMidPoint()).toDouble())));
     }
 
     public String getContactSignMessage(Craft contact) {
@@ -961,13 +958,15 @@ public class Craft {
             string = String.format("%s %.0fk %s",
                     type,
                     distance / 1000,
-                    ChatUtils.abbreviateDirection(Direction.getClosest(hitBox.getMidPoint().sub(contact.getHitBox().getMidPoint()).toDouble())));
+                    ChatUtils.abbreviateDirection(Direction.getClosest(MathUtils.vector3iDirectionalDiff(hitBox.getMidPoint(),
+                            contact.getHitBox().getMidPoint()).toDouble())));
 
         } else {
             string = String.format("%s %.0f %s",
                     type,
                     distance,
-                    ChatUtils.abbreviateDirection(Direction.getClosest(hitBox.getMidPoint().sub(contact.getHitBox().getMidPoint()).toDouble())));
+                    ChatUtils.abbreviateDirection(Direction.getClosest(MathUtils.vector3iDirectionalDiff(hitBox.getMidPoint(),
+                            contact.getHitBox().getMidPoint()).toDouble())));
         }
 
 
