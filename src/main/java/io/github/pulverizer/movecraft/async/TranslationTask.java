@@ -86,8 +86,9 @@ public class TranslationTask extends AsyncTask {
         }
 
         // Check if Craft is obstructed
-        if (craftObstructed())
+        if (craftObstructed()) {
             return;
+        }
 
         // Call the Craft Translate Event
         CraftTranslateEvent event = new CraftTranslateEvent(craft, oldHitBox, newHitBox);
@@ -105,18 +106,19 @@ public class TranslationTask extends AsyncTask {
         }
 
         // Clean up torpedoes after explosion
-        // TODO - Move to correct location
-        //  What is the correct location?
-        if (!collisionBox.isEmpty() && craft.getType().getCruiseOnPilot()) {
+        if (!collisionBox.isEmpty() && craft.getType().getCruiseOnPilot() && craft.getType().getCollisionExplosion() > 0) {
             craft.release(null);
+
             for (Vector3i location : oldHitBox) {
                 updates.add(new BlockCreateCommand(craft.getWorld(), location, BlockTypes.AIR));
             }
-            newHitBox = new HashHitBox();
-        }
 
-        // Add Craft Translation Map Update to list of updates
-        updates.add(new CraftTranslateCommand(craft, displacement, newHitBox));
+            newHitBox = new HashHitBox();
+
+        } else {
+            // Add Craft Translation Map Update to list of updates
+            updates.add(new CraftTranslateCommand(craft, displacement, newHitBox));
+        }
 
         // Move Entities
         moveEntities();

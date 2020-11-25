@@ -2,7 +2,6 @@ package io.github.pulverizer.movecraft.map_updater.update;
 
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.Movecraft;
-import io.github.pulverizer.movecraft.world.ChunkDataManager;
 import io.github.pulverizer.movecraft.config.Settings;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.event.SignTranslateEvent;
@@ -11,6 +10,7 @@ import io.github.pulverizer.movecraft.utils.HashHitBox;
 import io.github.pulverizer.movecraft.utils.HitBox;
 import io.github.pulverizer.movecraft.utils.MutableHitBox;
 import io.github.pulverizer.movecraft.utils.SolidHitBox;
+import io.github.pulverizer.movecraft.world.ChunkDataManager;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
@@ -27,13 +27,14 @@ import java.util.Queue;
 import java.util.Set;
 
 public class CraftTranslateCommand extends UpdateCommand {
+
     private final Craft craft;
     private final Vector3i displacement;
     private final HashHitBox newHitBox;
     private final World world;
 
 
-    public CraftTranslateCommand(Craft craft, Vector3i displacement, HashHitBox newHitBox){
+    public CraftTranslateCommand(Craft craft, Vector3i displacement, HashHitBox newHitBox) {
         this.craft = craft;
         this.displacement = displacement;
         this.newHitBox = newHitBox;
@@ -47,14 +48,14 @@ public class CraftTranslateCommand extends UpdateCommand {
         long time = System.currentTimeMillis();
 
         final Logger logger = Movecraft.getInstance().getLogger();
-        if(craft.getHitBox().isEmpty()){
+        if (craft.getHitBox().isEmpty()) {
             logger.warn("Attempted to move craft with empty HashHitBox!");
             craft.release(null);
             return;
         }
 
         final Set<BlockType> passthroughBlocks = new HashSet<>(craft.getType().getPassthroughBlocks());
-        if(craft.isSinking()){
+        if (craft.isSinking()) {
             passthroughBlocks.add(BlockTypes.WATER);
             passthroughBlocks.add(BlockTypes.FLOWING_WATER);
             passthroughBlocks.add(BlockTypes.LEAVES);
@@ -64,7 +65,7 @@ public class CraftTranslateCommand extends UpdateCommand {
             passthroughBlocks.add(BlockTypes.DOUBLE_PLANT);
         }
 
-        if(passthroughBlocks.isEmpty()){
+        if (passthroughBlocks.isEmpty()) {
 
             //add the craft
             translateCraft();
@@ -83,12 +84,9 @@ public class CraftTranslateCommand extends UpdateCommand {
 
         } else {
 
-            MutableHitBox originalLocations = new HashHitBox();
-            for (Vector3i vector3i : craft.getHitBox()) {
-                originalLocations.add((vector3i).sub(displacement));
-            }
+            MutableHitBox originalLocations = new HashHitBox(craft.getHitBox());
 
-            final HitBox to = CollectionUtils.filter(craft.getHitBox(), originalLocations);
+            final HitBox to = CollectionUtils.filter(newHitBox, originalLocations);
             for (Vector3i location : to) {
                 BlockSnapshot material = craft.getWorld().createSnapshot(location);
                 if (passthroughBlocks.contains(material.getState().getType())) {
@@ -98,19 +96,19 @@ public class CraftTranslateCommand extends UpdateCommand {
 
             //place phased blocks
             //The subtraction of the set of coordinates in the HitBox cube and the HitBox itself
-            final HitBox invertedHitBox = CollectionUtils.filter(craft.getHitBox().boundingHitBox(), craft.getHitBox());
+            final HitBox invertedHitBox = CollectionUtils.filter(newHitBox.boundingHitBox(), newHitBox);
 
             //A set of locations that are confirmed to be "exterior" locations
             final MutableHitBox exterior = new HashHitBox();
             final MutableHitBox interior = new HashHitBox();
 
             //place phased blocks
-            final int minX = craft.getHitBox().getMinX();
-            final int maxX = craft.getHitBox().getMaxX();
-            final int minY = craft.getHitBox().getMinY();
-            final int maxY = craft.getHitBox().getMaxY();
-            final int minZ = craft.getHitBox().getMinZ();
-            final int maxZ = craft.getHitBox().getMaxZ();
+            final int minX = newHitBox.getMinX();
+            final int maxX = newHitBox.getMaxX();
+            final int minY = newHitBox.getMinY();
+            final int maxY = newHitBox.getMaxY();
+            final int minZ = newHitBox.getMinZ();
+            final int maxZ = newHitBox.getMaxZ();
             final HitBox[] surfaces = {
                     new SolidHitBox(new Vector3i(minX, minY, minZ), new Vector3i(minX, maxY, maxZ)),
                     new SolidHitBox(new Vector3i(minX, minY, minZ), new Vector3i(maxX, minY, maxZ)),
@@ -122,12 +120,12 @@ public class CraftTranslateCommand extends UpdateCommand {
             //Valid exterior starts as the 6 surface planes of the HitBox with the locations that lie in the HitBox removed
             final Set<Vector3i> validExterior = new HashSet<>();
             for (HitBox hitBox : surfaces) {
-                validExterior.addAll(CollectionUtils.filter(hitBox, craft.getHitBox()).asSet());
+                validExterior.addAll(CollectionUtils.filter(hitBox, newHitBox).asSet());
             }
 
             //Check to see which locations in the from set are actually outside of the craft
-            for (Vector3i location :validExterior ) {
-                if (craft.getHitBox().contains(location) || exterior.contains(location)) {
+            for (Vector3i location : validExterior) {
+                if (newHitBox.contains(location) || exterior.contains(location)) {
                     continue;
                 }
                 //use a modified BFS for multiple origin elements
@@ -173,15 +171,11 @@ public class CraftTranslateCommand extends UpdateCommand {
             }
 
             //place confirmed blocks if they have been un-phased
-            for (BlockSnapshot block : craft.getPhasedBlocks()) {
+            final HashSet<BlockSnapshot> phasedBlocks = new HashSet<>(craft.getPhasedBlocks());
+            for (BlockSnapshot block : phasedBlocks) {
 
-                if (exterior.contains(new Vector3i(block.getPosition().getX(), block.getPosition().getY(), block.getPosition().getZ()))) {
-
-                    craft.getWorld().restoreSnapshot(block, true, BlockChangeFlags.NONE);
-                    craft.getPhasedBlocks().remove(block);
-                }
-
-                if (originalLocations.contains(new Vector3i(block.getPosition().getX(), block.getPosition().getY(), block.getPosition().getZ())) && !craft.getHitBox().inBounds(new Vector3i(block.getPosition().getX(), block.getPosition().getY(), block.getPosition().getZ()))) {
+                if (exterior.contains(block.getPosition())
+                        || (originalLocations.contains(block.getPosition()) && !newHitBox.contains(block.getPosition()))) {
 
                     craft.getWorld().restoreSnapshot(block, true, BlockChangeFlags.NONE);
                     craft.getPhasedBlocks().remove(block);
@@ -192,7 +186,9 @@ public class CraftTranslateCommand extends UpdateCommand {
                 final BlockSnapshot material = craft.getWorld().createSnapshot(location);
                 if (passthroughBlocks.contains(material.getState().getType())) {
                     craft.getPhasedBlocks().add(material);
-                    craft.getWorld().restoreSnapshot(location, BlockTypes.AIR.getDefaultState().snapshotFor(new Location<>(craft.getWorld(), location)), true, BlockChangeFlags.NONE);
+                    craft.getWorld()
+                            .restoreSnapshot(location, BlockTypes.AIR.getDefaultState().snapshotFor(new Location<>(craft.getWorld(), location)), true,
+                                    BlockChangeFlags.NONE);
 
                 }
             }
@@ -203,7 +199,10 @@ public class CraftTranslateCommand extends UpdateCommand {
         craft.updateLastMoveTick();
         craft.setProcessing(false);
 
-        if(Settings.Debug) logger.info("Total time: " + time + " ms. Moving with cooldown of " + craft.getTickCooldown() + ". Speed of: " + String.format("%.2f", craft.getActualSpeed()));
+        if (Settings.Debug) {
+            logger.info("Total time: " + time + " ms. Moving with cooldown of " + craft.getTickCooldown() + ". Speed of: " + String
+                    .format("%.2f", craft.getActualSpeed()));
+        }
     }
 
     private void translateCraft() {
@@ -228,13 +227,13 @@ public class CraftTranslateCommand extends UpdateCommand {
         chunkDataManager.processFireSpread();
     }
 
-    public Craft getCraft(){
+    public Craft getCraft() {
         return craft;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if(!(obj instanceof CraftTranslateCommand)){
+        if (!(obj instanceof CraftTranslateCommand)) {
             return false;
         }
         CraftTranslateCommand other = (CraftTranslateCommand) obj;

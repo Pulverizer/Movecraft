@@ -93,7 +93,7 @@ public class CraftRotateCommand extends UpdateCommand {
                 validExterior.addAll(CollectionUtils.filter(hitBox, newHitBox).asSet());
             }
             //Check to see which locations in the from set are actually outside of the craft
-            for (Vector3i location :validExterior ) {
+            for (Vector3i location : validExterior ) {
                 if (newHitBox.contains(location) || exterior.contains(location)) {
                     continue;
                 }
@@ -137,19 +137,16 @@ public class CraftRotateCommand extends UpdateCommand {
             }
 
             //place confirmed blocks if they have been un-phased
-            craft.getPhasedBlocks().forEach(block -> {
-                if (exterior.contains(block.getPosition())) {
+            final HashSet<BlockSnapshot> phasedBlocks = new HashSet<>(craft.getPhasedBlocks());
+            for (BlockSnapshot block : phasedBlocks) {
+
+                if (exterior.contains(block.getPosition())
+                        || (originalLocations.contains(block.getPosition()) && !newHitBox.contains(block.getPosition()))) {
 
                     craft.getWorld().restoreSnapshot(block, true, BlockChangeFlags.NONE);
                     craft.getPhasedBlocks().remove(block);
                 }
-
-                if (originalLocations.contains(block.getPosition()) && !craft.getHitBox().inBounds(block.getPosition())) {
-
-                    craft.getWorld().restoreSnapshot(block, true, BlockChangeFlags.NONE);
-                    craft.getPhasedBlocks().remove(block);
-                }
-            });
+            }
 
             for (Vector3i location : interior) {
                 final BlockSnapshot material = craft.getWorld().createSnapshot(location);
