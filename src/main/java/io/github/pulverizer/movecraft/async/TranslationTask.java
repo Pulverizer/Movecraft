@@ -8,12 +8,16 @@ import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.event.CraftTranslateEvent;
 import io.github.pulverizer.movecraft.map_updater.MapUpdateManager;
-import io.github.pulverizer.movecraft.map_updater.update.*;
+import io.github.pulverizer.movecraft.map_updater.update.BlockCreateCommand;
+import io.github.pulverizer.movecraft.map_updater.update.CraftTranslateCommand;
+import io.github.pulverizer.movecraft.map_updater.update.EntityUpdateCommand;
+import io.github.pulverizer.movecraft.map_updater.update.ExplosionUpdateCommand;
+import io.github.pulverizer.movecraft.map_updater.update.ParticleUpdateCommand;
+import io.github.pulverizer.movecraft.map_updater.update.UpdateCommand;
 import io.github.pulverizer.movecraft.utils.HashHitBox;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
-import org.spongepowered.api.effect.particle.ParticleType;
 import org.spongepowered.api.effect.particle.ParticleTypes;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.EntityTypes;
@@ -35,15 +39,15 @@ public class TranslationTask extends AsyncTask {
 
     //TODO: Move to config.
     private static final ImmutableSet<BlockType> FALL_THROUGH_BLOCKS = ImmutableSet
-            .of(BlockTypes.AIR, BlockTypes.FLOWING_WATER, BlockTypes.FLOWING_LAVA, BlockTypes.TALLGRASS, BlockTypes.YELLOW_FLOWER,
-                    BlockTypes.RED_FLOWER, BlockTypes.BROWN_MUSHROOM, BlockTypes.RED_MUSHROOM, BlockTypes.TORCH, BlockTypes.FIRE,
-                    BlockTypes.REDSTONE_WIRE, BlockTypes.WHEAT, BlockTypes.STANDING_SIGN, BlockTypes.LADDER, BlockTypes.WALL_SIGN, BlockTypes.LEVER,
-                    BlockTypes.LIGHT_WEIGHTED_PRESSURE_PLATE, BlockTypes.HEAVY_WEIGHTED_PRESSURE_PLATE, BlockTypes.STONE_PRESSURE_PLATE,
-                    BlockTypes.WOODEN_PRESSURE_PLATE, BlockTypes.UNLIT_REDSTONE_TORCH, BlockTypes.REDSTONE_TORCH, BlockTypes.STONE_BUTTON,
-                    BlockTypes.SNOW_LAYER, BlockTypes.REEDS, BlockTypes.FENCE, BlockTypes.ACACIA_FENCE, BlockTypes.BIRCH_FENCE,
-                    BlockTypes.DARK_OAK_FENCE, BlockTypes.JUNGLE_FENCE, BlockTypes.NETHER_BRICK_FENCE, BlockTypes.SPRUCE_FENCE,
-                    BlockTypes.UNPOWERED_REPEATER, BlockTypes.POWERED_REPEATER, BlockTypes.WATERLILY, BlockTypes.CARROTS, BlockTypes.POTATOES,
-                    BlockTypes.WOODEN_BUTTON, BlockTypes.CARPET);
+            .of(BlockTypes.AIR, BlockTypes.WATER, BlockTypes.LAVA, BlockTypes.FLOWING_WATER, BlockTypes.FLOWING_LAVA, BlockTypes.TALLGRASS,
+                    BlockTypes.YELLOW_FLOWER, BlockTypes.RED_FLOWER, BlockTypes.BROWN_MUSHROOM, BlockTypes.RED_MUSHROOM, BlockTypes.TORCH,
+                    BlockTypes.FIRE, BlockTypes.REDSTONE_WIRE, BlockTypes.WHEAT, BlockTypes.STANDING_SIGN, BlockTypes.LADDER, BlockTypes.WALL_SIGN,
+                    BlockTypes.LEVER, BlockTypes.LIGHT_WEIGHTED_PRESSURE_PLATE, BlockTypes.HEAVY_WEIGHTED_PRESSURE_PLATE,
+                    BlockTypes.STONE_PRESSURE_PLATE, BlockTypes.WOODEN_PRESSURE_PLATE, BlockTypes.UNLIT_REDSTONE_TORCH, BlockTypes.REDSTONE_TORCH,
+                    BlockTypes.STONE_BUTTON, BlockTypes.SNOW_LAYER, BlockTypes.REEDS, BlockTypes.FENCE, BlockTypes.ACACIA_FENCE,
+                    BlockTypes.BIRCH_FENCE, BlockTypes.DARK_OAK_FENCE, BlockTypes.JUNGLE_FENCE, BlockTypes.NETHER_BRICK_FENCE,
+                    BlockTypes.SPRUCE_FENCE, BlockTypes.UNPOWERED_REPEATER, BlockTypes.POWERED_REPEATER, BlockTypes.WATERLILY, BlockTypes.CARROTS,
+                    BlockTypes.POTATOES, BlockTypes.WOODEN_BUTTON, BlockTypes.CARPET);
 
     private Vector3i displacement;
     private HashHitBox newHitBox;
@@ -68,8 +72,9 @@ public class TranslationTask extends AsyncTask {
     @Override
     protected void execute() throws InterruptedException {
         // Check can move
-        if (oldHitBox.isEmpty() || craft.isDisabled())
+        if (oldHitBox.isEmpty() || craft.isDisabled()) {
             return;
+        }
 
         // Check Craft height
         if (!checkCraftHeight()) {
@@ -150,8 +155,9 @@ public class TranslationTask extends AsyncTask {
                     // TODO - Probably won't work in newer versions with kelp, etc
                     if (craft.getWorld().getBlockType(middle.getX(), testY, middle.getZ()) != BlockTypes.AIR && (
                             !craft.getType().getCanHoverOverWater()
-                                    || craft.getWorld().getBlockType(middle.getX(), testY, middle.getZ()) != BlockTypes.WATER))
+                                    || craft.getWorld().getBlockType(middle.getX(), testY, middle.getZ()) != BlockTypes.WATER)) {
                         break;
+                    }
                 }
 
                 if (minY - testY > craft.getType().getMaxHeightAboveGround()) {
@@ -304,7 +310,8 @@ public class TranslationTask extends AsyncTask {
         if (craft.getType().getSmokeOnSink() > 0) {
             for (Vector3i location : newHitBox) {
                 if (ThreadLocalRandom.current().nextInt(craft.getType().getSmokeOnSink()) < 1) {
-                    updates.add(new ParticleUpdateCommand(new Location<>(world, location), ParticleTypes.LARGE_SMOKE, craft.getType().getSmokeOnSinkQuantity()));
+                    updates.add(new ParticleUpdateCommand(new Location<>(world, location), ParticleTypes.LARGE_SMOKE,
+                            craft.getType().getSmokeOnSinkQuantity()));
                 }
             }
         }
@@ -350,10 +357,14 @@ public class TranslationTask extends AsyncTask {
 
             Task.builder()
                     .execute(() -> {
-                        for (Entity entity : craft.getWorld().getIntersectingEntities(new AABB(oldHitBox.getMinX() - 0.5, oldHitBox.getMinY() - 0.5, oldHitBox.getMinZ() - 0.5, oldHitBox.getMaxX() + 1.5, oldHitBox.getMaxY() + 1.5, oldHitBox.getMaxZ() + 1.5))) {
+                        for (Entity entity : craft.getWorld().getIntersectingEntities(
+                                new AABB(oldHitBox.getMinX() - 0.5, oldHitBox.getMinY() - 0.5, oldHitBox.getMinZ() - 0.5, oldHitBox.getMaxX() + 1.5,
+                                        oldHitBox.getMaxY() + 1.5, oldHitBox.getMaxZ() + 1.5))) {
 
-                            if (entity.getType() == EntityTypes.PLAYER || entity.getType() == EntityTypes.PRIMED_TNT || entity.getType() == EntityTypes.ITEM || !craft.getType().onlyMovePlayers()) {
-                                EntityUpdateCommand eUp = new EntityUpdateCommand(entity, entity.getLocation().getPosition().add(displacement.getX(), displacement.getY(), displacement.getZ()), 0);
+                            if (entity.getType() == EntityTypes.PLAYER || entity.getType() == EntityTypes.PRIMED_TNT
+                                    || entity.getType() == EntityTypes.ITEM || !craft.getType().onlyMovePlayers()) {
+                                EntityUpdateCommand eUp = new EntityUpdateCommand(entity,
+                                        entity.getLocation().getPosition().add(displacement.getX(), displacement.getY(), displacement.getZ()), 0);
                                 updates.add(eUp);
 
                                 if (Settings.Debug) {
@@ -377,14 +388,19 @@ public class TranslationTask extends AsyncTask {
 
 
             synchronized (this) {
-                while (!processedEntities.get()) this.wait(1);
+                while (!processedEntities.get()) {
+                    this.wait(1);
+                }
             }
 
         } else {
             // Handle auto Craft release
             //add releaseTask without playermove to manager
-            if (!craft.getType().getCruiseOnPilot() && !craft.isSinking())  // not necessary to release cruiseonpilot crafts, because they will already be released
+            if (!craft.getType().getCruiseOnPilot() && !craft
+                    .isSinking())  // not necessary to release cruiseonpilot crafts, because they will already be released
+            {
                 CraftManager.getInstance().addReleaseTask(craft);
+            }
         }
     }
 
@@ -450,7 +466,8 @@ public class TranslationTask extends AsyncTask {
 
                     if (tileEntity instanceof TileEntityCarrier) {
 
-                        drops.addAll(Arrays.asList(StreamSupport.stream(((TileEntityCarrier) tileEntity).getInventory().<Slot>slots().spliterator(), false).map(Slot::peek).toArray(ItemStack[]::new)));
+                        drops.addAll(Arrays.asList(StreamSupport.stream(((TileEntityCarrier) tileEntity).getInventory().<Slot>slots().spliterator()
+                        , false).map(Slot::peek).toArray(ItemStack[]::new)));
 
                     }
                 });
@@ -460,7 +477,8 @@ public class TranslationTask extends AsyncTask {
                 ItemStack retStack = putInToChests(drop, chests);
                 if (retStack != null)
                     //drop items on position
-                    updates.add(new ItemDropUpdateCommand(new Location<>(craft.getWorld(), harvestedBlock.getX(), harvestedBlock.getY(), harvestedBlock.getZ()), retStack));
+                    updates.add(new ItemDropUpdateCommand(new Location<>(craft.getWorld(), harvestedBlock.getX(), harvestedBlock.getY(),
+                    harvestedBlock.getZ()), retStack));
             }
         }
     }

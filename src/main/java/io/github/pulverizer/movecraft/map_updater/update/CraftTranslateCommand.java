@@ -65,24 +65,7 @@ public class CraftTranslateCommand extends UpdateCommand {
             passthroughBlocks.add(BlockTypes.DOUBLE_PLANT);
         }
 
-        if (passthroughBlocks.isEmpty()) {
-
-            //add the craft
-            translateCraft();
-
-            // update the craft hitbox
-            craft.setHitBox(newHitBox);
-            craft.setLastMoveVector(displacement);
-
-            //trigger sign event
-            for (Vector3i location : craft.getHitBox()) {
-                if (world.getBlockType(location) == BlockTypes.WALL_SIGN || world.getBlockType(location) == BlockTypes.STANDING_SIGN) {
-                    Sponge.getEventManager().post(new SignTranslateEvent(location, craft));
-                }
-            }
-
-
-        } else {
+        if (!passthroughBlocks.isEmpty() && !newHitBox.isEmpty()) {
 
             MutableHitBox originalLocations = new HashHitBox(craft.getHitBox());
 
@@ -192,6 +175,23 @@ public class CraftTranslateCommand extends UpdateCommand {
 
                 }
             }
+        } else {
+
+            //add the craft
+            translateCraft();
+
+            // update the craft hitbox
+            craft.setHitBox(newHitBox);
+            craft.setLastMoveVector(displacement);
+
+            //trigger sign event
+            for (Vector3i location : craft.getHitBox()) {
+                if (world.getBlockType(location) == BlockTypes.WALL_SIGN || world.getBlockType(location) == BlockTypes.STANDING_SIGN) {
+                    Sponge.getEventManager().post(new SignTranslateEvent(location, craft));
+                }
+            }
+
+
         }
 
         time = System.currentTimeMillis() - time;
