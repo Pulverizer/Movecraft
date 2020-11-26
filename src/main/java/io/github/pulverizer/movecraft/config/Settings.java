@@ -37,7 +37,6 @@ public class Settings {
     public static HashSet<BlockType> FlightDeckBlocks;
 
     //   Sinking
-    public static double SinkRateTicks = 20.0;
     public static double SinkCheckTicks = 100.0;
 
     //   Wrecks

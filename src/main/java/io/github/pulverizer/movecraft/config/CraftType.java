@@ -21,72 +21,138 @@ import java.util.Set;
 
 final public class CraftType {
 
-    private final boolean requireWaterContact;
-    private final boolean canCruise;
-    private final boolean canTeleport;
-    private final boolean canStaticMove;
-    private final boolean canHover;
-    private final boolean canDirectControl;
-    private final boolean useGravity;
-    private final boolean canHoverOverWater;
+    // General
+    private final String name;
+    private final int minSize;
+    private final int maxSize;
+
+    //private final boolean canBeNamed;
+    private final boolean mustBeSubcraft;
+    private final Set<String> forbiddenSignStrings;
+    private final boolean requiresSpecificPerms;
+    private final boolean limitToParentHitBox;
+
+
+    // Entities
     private final boolean moveEntities;
     private final boolean onlyMovePlayers;
-    private final boolean allowHorizontalMovement;
-    private final boolean allowVerticalMovement;
-    private final boolean allowRemoteSign;
-    private final boolean allowCannonDirectorSign;
-    private final boolean allowAADirectorSign;
-    private final boolean cruiseOnPilot;
-    private final boolean allowVerticalTakeoffAndLanding;
-    private final boolean rotateAtMidpoint;
-    private final boolean halfSpeedUnderwater;
-    private final boolean focusedExplosion;
-    private final boolean mustBeSubcraft;
-    private final boolean keepMovingOnSink;
-    private final boolean requiresSpecificPerms;
-    private final int maxSize;
-    private final int minSize;
-    private final int minHeightLimit;
-    private final int maxHeightLimit;
-    private final int maxHeightAboveGround;
-    private final Direction cruiseOnPilotVertDirection;
-    private final int maxStaticMove;
-    private final int cruiseSkipBlocks;
-    private final int vertCruiseSkipBlocks;
-    private final double cruiseTickCooldown;
-    private final int sinkRateTicks;
-    private final int smokeOnSink;
-    private final int smokeOnSinkQuantity;
-    private final double tickCooldown;
-    private final int hoverLimit;
+
+
+    // Crew
+    private final boolean canHaveCrew;
+    private final boolean canHaveLoaders;
+    private final boolean canHaveRepairmen;
+    private final boolean canHaveCannonDirectors;
+    private final boolean canHaveAADirectors;
+
+
+    // Control
+    private final boolean canDirectControl;
+    private final boolean allowRemoteSigns;
+
+
+    // Fuel
+    private final Set<BlockType> furnaceBlocks;
+    private final Map<ItemType, Double> fuelTypes;
     private final double fuelBurnRate;
-    private final double sinkPercent;
-    private final double overallSinkPercent;
-    private final double detectionMultiplier;
-    private final double underwaterDetectionMultiplier;
-    private final float explodeOnCrash;
-    private final float collisionExplosion;
-    private final String name;
+    //private final Map<String, Double> perWorldFuelBurnRate;
+
+
+    // Blocks
     private final Set<BlockType> allowedBlocks;
     private final Set<BlockType> forbiddenBlocks;
-    private final Set<String> forbiddenSignStrings;
     private final Map<List<BlockType>, List<Double>> flyBlocks;
     private final Map<List<BlockType>, List<Double>> moveBlocks;
     private final List<BlockType> harvestBlocks;
     private final List<BlockType> harvesterBladeBlocks;
     private final Set<BlockType> passthroughBlocks;
-    private final Set<BlockType> furnaceBlocks;
-    private final Map<ItemType, Double> fuelItems;
     private final Map<Set<BlockType>, Double> speedBlocks;
     private final Map<Set<BlockType>, List<Double>> exposedSpeedBlocks;
+
+
+    // Spotting
+    private final float spottingMultiplier;
+    //private final Map<String, Double> perWorldSpottingMultiplier;
+    private final double detectionMultiplier;
+    //private final Map<String, Double> perWorldDetectionMultiplier;
+    private final double underwaterDetectionMultiplier;
+    //private final Map<String, Double> perWorldUnderwaterDetectionMultiplier;
+
+
+    // Movement
+    private final boolean rotateAtMidpoint;
+    private final boolean requireWaterContact;
+    private final double underwaterSpeedMultipler;
+
+    //   Limits
+    private final boolean allowHorizontalMovement;
+    private final boolean allowVerticalMovement;
+    private final boolean allowVerticalTakeoffAndLanding;
+
+    //   Bounds
+    private final int minHeightLimit;
+    //private final Map<String, Integer> perWorldMinHeightLimit;
+    private final int maxHeightLimit;
+    //private final Map<String, Integer> perWorldMaxHeightLimit;
+    private final int maxHeightAboveGround;
+    //private final Map<String, Integer> perWorldMaxHeightAboveGround;
+
+    //   Hover
+    private final boolean canHover;
+    private final int hoverLimit;
+    private final boolean canHoverOverWater;
+    private final Set<BlockType> forbiddenHoverOverBlocks;
+
+    //   Gravity
+    private final boolean useGravity;
+    //private final int gravityDropDistance;
+    //private final int gravityInclineDistance;
+
+    //   Cruising
+    private final boolean canCruise;
+    private final int cruiseSkipBlocks;
+    //private final Map<String, Integer> perWorldCruiseSkipBlocks;
+    private final int vertCruiseSkipBlocks;
+    //private final Map<String, Integer> perWorldVertCruiseSkipBlocks;
+
+    //     Cruise on Pilot
+    private final boolean cruiseOnPilot;
+    private final int cruiseOnPilotMaxMoves;
+    private final Direction cruiseOnPilotVertDirection;
+
+    //   Teleport / Static Move
+    private final boolean canTeleport;
+    private final boolean canStaticMove;
+    //private final boolean canSwitchWorld;
+    //private final Set<String> disableTeleportToWorlds;
+    //private final int teleportationCooldown;
+    private final int maxStaticMove;
+
+    //   Cooldown
+    private final double tickCooldown;
+    //private final Map<String, Integer> perWorldTickCooldown; // speed setting
+    private final double cruiseTickCooldown;
+    //private final Map<String, Integer> perWorldCruiseTickCooldown; // cruise speed setting
+    //private final double cruiseVertTickCooldown;
+    //private final Map<String, Integer> perWorldVertCruiseTickCooldown; // cruise speed setting
     private final boolean ignoreMapUpdateTime;
     private final float targetMoveTime;
-    private final float spottingMultiplier;
-    private final boolean limitToParentHitBox;
-    private final boolean allowLoaders;
-    private final boolean allowRepairmen;
-    private final boolean canHaveCrew;
-    private final int cruiseOnPilotMaxMoves;
+
+    //   Collisions
+    private final float collisionExplosion;
+    private final boolean focusedExplosion;
+    //private final SoundType collisionSound;
+
+
+    // Sinking
+    private final double sinkPercent;
+    private final double overallSinkPercent;
+    private final float explodeOnCrash;
+    private final boolean keepMovingOnSink;
+    private final int sinkRateTicks;
+    private final int smokeOnSink;
+    private final int smokeOnSinkQuantity;
+
 
     public CraftType(File file) throws NullPointerException, IOException, ObjectMappingException {
 
@@ -100,29 +166,36 @@ final public class CraftType {
         minSize = configNode.getNode("minSize").getInt();
 
         requiresSpecificPerms = configNode.getNode("requiresSpecificPerms").getBoolean(true);
-        allowedBlocks = configNode.getNode("allowedBlocks").getValue(new TypeToken<Set<BlockType>>() {}, new HashSet<>());
-        furnaceBlocks = configNode.getNode("furnaceBlocks").getValue(new TypeToken<Set<BlockType>>() {}, new HashSet<>());
+        allowedBlocks = configNode.getNode("allowedBlocks").getValue(new TypeToken<Set<BlockType>>() {
+        }, new HashSet<>());
+        furnaceBlocks = configNode.getNode("furnaceBlocks").getValue(new TypeToken<Set<BlockType>>() {
+        }, new HashSet<>());
         if (furnaceBlocks.isEmpty()) {
             furnaceBlocks.add(BlockTypes.FURNACE);
             furnaceBlocks.add(BlockTypes.LIT_FURNACE);
         }
 
-        fuelItems = configNode.getNode("fuelItems").getValue(new TypeToken<Map<ItemType, Double>>() {}, new HashMap<>());
-        if (fuelItems.isEmpty()) {
-            fuelItems.put(ItemTypes.COAL, 8.0);
-            fuelItems.put(ItemTypes.COAL_BLOCK, 72.0);
+        fuelTypes = configNode.getNode("fuelItems").getValue(new TypeToken<Map<ItemType, Double>>() {
+        }, new HashMap<>());
+        if (fuelTypes.isEmpty()) {
+            fuelTypes.put(ItemTypes.COAL, 8.0);
+            fuelTypes.put(ItemTypes.COAL_BLOCK, 72.0);
         }
 
 
-        forbiddenBlocks = configNode.getNode("forbiddenBlocks").getValue(new TypeToken<Set<BlockType>>() {}, new HashSet<>());
-        forbiddenSignStrings = configNode.getNode("forbiddenSignStrings").getValue(new TypeToken<Set<String>>() {}, new HashSet<>());
+        forbiddenBlocks = configNode.getNode("forbiddenBlocks").getValue(new TypeToken<Set<BlockType>>() {
+        }, new HashSet<>());
+        forbiddenSignStrings = configNode.getNode("forbiddenSignStrings").getValue(new TypeToken<Set<String>>() {
+        }, new HashSet<>());
 
         requireWaterContact = configNode.getNode("requireWaterContact").getBoolean(false);
         tickCooldown = configNode.getNode("speed").getDouble();
         cruiseTickCooldown = configNode.getNode("cruiseSpeed").getDouble();
 
-        flyBlocks = blockTypeMapListFromNode(configNode.getNode("flyblocks").getValue(new TypeToken<Map<List<BlockType>, List<String>>>() {}, new HashMap<>()));
-        moveBlocks = blockTypeMapListFromNode(configNode.getNode("moveBlocks").getValue(new TypeToken<Map<List<BlockType>, List<String>>>() {}, new HashMap<>()));
+        flyBlocks = blockTypeMapListFromNode(configNode.getNode("flyblocks").getValue(new TypeToken<Map<List<BlockType>, List<String>>>() {
+        }, new HashMap<>()));
+        moveBlocks = blockTypeMapListFromNode(configNode.getNode("moveBlocks").getValue(new TypeToken<Map<List<BlockType>, List<String>>>() {
+        }, new HashMap<>()));
 
         canCruise = configNode.getNode("canCruise").getBoolean(false);
         canTeleport = configNode.getNode("canTeleport").getBoolean(false);
@@ -141,14 +214,14 @@ final public class CraftType {
         allowVerticalMovement = configNode.getNode("allowVerticalMovement").getBoolean(true);
         rotateAtMidpoint = configNode.getNode("rotateAtMidpoint").getBoolean(false);
         allowHorizontalMovement = configNode.getNode("allowHorizontalMovement").getBoolean(true);
-        allowRemoteSign = configNode.getNode("allowRemoteSign").getBoolean(true);
-        allowCannonDirectorSign = configNode.getNode("allowCannonDirectorSign").getBoolean(true);
-        allowAADirectorSign = configNode.getNode("allowAADirectorSign").getBoolean(true);
+        allowRemoteSigns = configNode.getNode("allowRemoteSign").getBoolean(true);
+        canHaveCannonDirectors = configNode.getNode("allowCannonDirectorSign").getBoolean(true);
+        canHaveAADirectors = configNode.getNode("allowAADirectorSign").getBoolean(true);
         canStaticMove = configNode.getNode("canStaticMove").getBoolean(false);
         maxStaticMove = configNode.getNode("maxStaticMove").getInt(10000);
         cruiseSkipBlocks = configNode.getNode("cruiseSkipBlocks").getInt(0);
         vertCruiseSkipBlocks = configNode.getNode("vertCruiseSkipBlocks").getInt(cruiseSkipBlocks);
-        halfSpeedUnderwater = configNode.getNode("halfSpeedUnderwater").getBoolean(false);
+        underwaterSpeedMultipler = configNode.getNode("underwaterSpeedMultipler").getDouble(0);
         focusedExplosion = configNode.getNode("focusedExplosion").getBoolean(false);
         mustBeSubcraft = configNode.getNode("mustBeSubcraft").getBoolean(false);
         fuelBurnRate = configNode.getNode("fuelBurnRate").getDouble(0);
@@ -168,6 +241,8 @@ final public class CraftType {
         maxHeightAboveGround = configNode.getNode("maxHeightAboveGround").getInt(-1);
         canDirectControl = configNode.getNode("canDirectControl").getBoolean(true);
         canHover = configNode.getNode("canHover").getBoolean(false);
+        forbiddenHoverOverBlocks = configNode.getNode("forbiddenHoverOverBlocks").getValue(new TypeToken<Set<BlockType>>() {
+        }, new HashSet<>());
         canHoverOverWater = configNode.getNode("canHoverOverWater").getBoolean(true);
         moveEntities = configNode.getNode("moveEntities").getBoolean(true);
 
@@ -178,17 +253,20 @@ final public class CraftType {
         hoverLimit = configNode.getNode("hoverLimit").getInt(0);
         harvestBlocks = configNode.getNode("harvestBlocks").getList(TypeToken.of(BlockType.class), new ArrayList<>());
         harvesterBladeBlocks = configNode.getNode("harvesterBladeBlocks").getList(TypeToken.of(BlockType.class), new ArrayList<>());
-        passthroughBlocks = configNode.getNode("passthroughBlocks").getValue(new TypeToken<Set<BlockType>>() {}, new HashSet<>());
+        passthroughBlocks = configNode.getNode("passthroughBlocks").getValue(new TypeToken<Set<BlockType>>() {
+        }, new HashSet<>());
         allowVerticalTakeoffAndLanding = configNode.getNode("allowVerticalTakeoffAndLanding").getBoolean(true);
 
-        speedBlocks = configNode.getNode("speedBlocks").getValue(new TypeToken<Map<Set<BlockType>, Double>>() {}, new HashMap<>());
-        exposedSpeedBlocks = configNode.getNode("exposedSpeedBlocks").getValue(new TypeToken<Map<Set<BlockType>, List<Double>>>() {}, new HashMap<>());
+        speedBlocks = configNode.getNode("speedBlocks").getValue(new TypeToken<Map<Set<BlockType>, Double>>() {
+        }, new HashMap<>());
+        exposedSpeedBlocks = configNode.getNode("exposedSpeedBlocks").getValue(new TypeToken<Map<Set<BlockType>, List<Double>>>() {
+        }, new HashMap<>());
         ignoreMapUpdateTime = configNode.getNode("ignoreMapUpdateTime").getBoolean(false);
         targetMoveTime = configNode.getNode("targetMoveTime").getFloat(((float) maxSize) / 1000f);
         spottingMultiplier = configNode.getNode("spottingMultiplier").getFloat(0.5f);
         limitToParentHitBox = configNode.getNode("limitToParentHitBox").getBoolean(false);
-        allowLoaders = configNode.getNode("allowLoaders").getBoolean(true);
-        allowRepairmen = configNode.getNode("allowRepairmen").getBoolean(true);
+        canHaveLoaders = configNode.getNode("allowLoaders").getBoolean(true);
+        canHaveRepairmen = configNode.getNode("allowRepairmen").getBoolean(true);
         canHaveCrew = configNode.getNode("canHaveCrew").getBoolean(true);
         cruiseOnPilotMaxMoves = configNode.getNode("cruiseOnPilotMaxMoves").getInt(300);
 
@@ -302,24 +380,24 @@ final public class CraftType {
         return allowHorizontalMovement;
     }
 
-    public boolean allowRemoteSign() {
-        return allowRemoteSign;
+    public boolean allowRemoteSigns() {
+        return allowRemoteSigns;
     }
 
     public boolean allowCannonDirectors() {
-        return allowCannonDirectorSign;
+        return canHaveCannonDirectors;
     }
 
     public boolean allowAADirectors() {
-        return allowAADirectorSign;
+        return canHaveAADirectors;
     }
 
     public double getFuelBurnRate() {
         return fuelBurnRate;
     }
 
-    public Map<ItemType, Double> getFuelItems() {
-        return fuelItems;
+    public Map<ItemType, Double> getFuelTypes() {
+        return fuelTypes;
     }
 
     public double getSinkPercent() {
@@ -366,8 +444,8 @@ final public class CraftType {
         return cruiseTickCooldown == 0 ? getTickCooldown() : (int) Math.ceil(20 / cruiseTickCooldown);
     }
 
-    public boolean getHalfSpeedUnderwater() {
-        return halfSpeedUnderwater;
+    public double getUnderwaterSpeedMultiplier() {
+        return underwaterSpeedMultipler;
     }
 
     public boolean getFocusedExplosion() {
@@ -412,6 +490,10 @@ final public class CraftType {
 
     public Set<BlockType> getFurnaceBlocks() {
         return furnaceBlocks;
+    }
+
+    public Set<BlockType> getForbiddenHoverOverBlocks() {
+        return forbiddenHoverOverBlocks;
     }
 
     public boolean getCanHoverOverWater() {
@@ -463,12 +545,12 @@ final public class CraftType {
         return limitToParentHitBox;
     }
 
-    public boolean allowLoaders() {
-        return allowLoaders;
+    public boolean canHaveLoaders() {
+        return canHaveLoaders;
     }
 
-    public boolean allowRepairmen() {
-        return allowRepairmen;
+    public boolean canHaveRepairmen() {
+        return canHaveRepairmen;
     }
 
     public boolean canHaveCrew() {
@@ -481,6 +563,14 @@ final public class CraftType {
 
     public int getSmokeOnSinkQuantity() {
         return smokeOnSinkQuantity;
+    }
+
+    public int getHoverLimit() {
+        return hoverLimit;
+    }
+
+    public boolean canHover() {
+        return canHover;
     }
 
     @Override

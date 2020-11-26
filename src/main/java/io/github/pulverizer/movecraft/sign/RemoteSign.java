@@ -11,12 +11,9 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockType;
 import org.spongepowered.api.block.BlockTypes;
-import org.spongepowered.api.block.tileentity.Sign;
 import org.spongepowered.api.block.tileentity.TileEntity;
 import org.spongepowered.api.data.key.Keys;
-import org.spongepowered.api.data.manipulator.immutable.tileentity.ImmutableSignData;
 import org.spongepowered.api.data.type.HandTypes;
-import org.spongepowered.api.data.value.immutable.ImmutableListValue;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.SpongeEventFactory;
 import org.spongepowered.api.event.block.InteractBlockEvent;
@@ -76,7 +73,7 @@ public final class RemoteSign {
             return;
         }
 
-        if (!foundCraft.getType().allowRemoteSign()) {
+        if (!foundCraft.getType().allowRemoteSigns()) {
             if (player != null) {
                 player.sendMessage(Text.of("ERROR: Remote Signs not allowed on this craft!"));
             }

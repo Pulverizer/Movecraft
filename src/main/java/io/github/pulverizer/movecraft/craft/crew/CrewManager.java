@@ -246,7 +246,7 @@ public class CrewManager {
             return;
         }
 
-        if (!craft.getType().allowLoaders()) {
+        if (!craft.getType().canHaveLoaders()) {
             player.sendMessage(Text.of("ERROR: Craft type does not support the loader role!"));
             return;
         }
@@ -269,7 +269,7 @@ public class CrewManager {
             return;
         }
 
-        if (!craft.getType().allowRepairmen()) {
+        if (!craft.getType().canHaveRepairmen()) {
             player.sendMessage(Text.of("ERROR: Craft type does not support the repairman role!"));
             return;
         }
