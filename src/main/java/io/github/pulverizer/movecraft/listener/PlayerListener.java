@@ -1,22 +1,14 @@
 package io.github.pulverizer.movecraft.listener;
 
 import com.flowpowered.math.vector.Vector3d;
-import com.flowpowered.math.vector.Vector3i;
-import io.github.pulverizer.movecraft.Movecraft;
 import io.github.pulverizer.movecraft.enums.DirectControlMode;
 import io.github.pulverizer.movecraft.utils.MathUtils;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.config.Settings;
 import io.github.pulverizer.movecraft.craft.CraftManager;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.key.Keys;
-import org.spongepowered.api.entity.EntityTypes;
-import org.spongepowered.api.entity.explosive.Explosive;
-import org.spongepowered.api.entity.explosive.PrimedTNT;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.cause.EventContextKey;
-import org.spongepowered.api.event.cause.EventContextKeys;
 import org.spongepowered.api.event.cause.entity.damage.DamageTypes;
 import org.spongepowered.api.event.cause.entity.damage.source.DamageSource;
 import org.spongepowered.api.event.entity.DamageEntityEvent;
@@ -24,10 +16,8 @@ import org.spongepowered.api.event.entity.DestructEntityEvent;
 import org.spongepowered.api.event.entity.MoveEntityEvent;
 import org.spongepowered.api.event.filter.Getter;
 import org.spongepowered.api.event.filter.cause.Root;
-import org.spongepowered.api.event.filter.type.Exclude;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.item.ItemTypes;
-import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.InventoryTransformations;
 import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
 import org.spongepowered.api.text.Text;
@@ -162,7 +152,7 @@ public class PlayerListener {
         }
 
         if (!craft.isProcessing() && craft.getType().getMoveEntities() && !timeToReleaseAfter.containsKey(craft)) {
-            if (Settings.ManOverBoardTimeout != 0) {
+            if (Settings.ManOverboardTimeout != 0) {
                 player.sendMessage(Text.of("You have left your craft.")); //TODO: Re-add /manoverboard
             } else {
                 player.sendMessage(Text.of("You have released your craft."));

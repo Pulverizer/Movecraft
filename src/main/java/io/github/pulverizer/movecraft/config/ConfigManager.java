@@ -54,16 +54,15 @@ public class ConfigManager {
         for (File file : files) {
             if (file.isFile() && file.getName().endsWith(".craft")) {
                 Movecraft.getInstance().getLogger().info("Loading CraftType: " + file.getName());
-                CraftType type = null;
 
                 try {
-                    type = new CraftType(file);
+                    CraftType type = new CraftType(file);
+                    craftTypes.add(type);
+
                 } catch (Exception e) {
                     Movecraft.getInstance().getLogger().error("Error when loading CraftType: " + file.getName());
                     e.printStackTrace();
                 }
-
-                craftTypes.add(type);
             }
         }
 

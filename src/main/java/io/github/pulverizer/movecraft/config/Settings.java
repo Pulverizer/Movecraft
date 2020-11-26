@@ -1,14 +1,11 @@
 package io.github.pulverizer.movecraft.config;
 
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import io.github.pulverizer.movecraft.Movecraft;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.api.block.BlockType;
-import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.item.ItemType;
 import org.spongepowered.api.item.ItemTypes;
 
@@ -16,38 +13,80 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
-//TODO - Switch to getters / setters
+//TODO - Switch to getters / setter 'load()'
 public class Settings {
+
+    // Main Settings
     public static boolean Debug = false;
     public static String LOCALE;
+
+
+    // Craft
     public static ItemType PilotTool = ItemTypes.STICK;
-    public static int SilhouetteViewDistance = 200;
-    public static int SilhouetteBlockCount = 20;
-    public static double SinkRateTicks = 20.0;
-    public static double SinkCheckTicks = 100.0;
-    public static int TracerRateTicks = 5;
     public static boolean ProtectPilotedCrafts = false;
     public static boolean DisableSpillProtection = false;
-    public static boolean RequireCreateSignPerm = false;
-    public static boolean TNTContactExplosives = true;
+    public static boolean CraftsUseNetherPortals = false;
+    public static HashSet<BlockType> DisableShadowBlocks;
+
+    //   Silhouettes
+    public static int SilhouetteViewDistance = 200;
+    public static int SilhouetteBlockCount = 20;
+
+    //   Carrier Deck
+    public static HashSet<BlockType> FlightDeckBlocks;
+
+    //   Sinking
+    public static double SinkRateTicks = 20.0;
+    public static double SinkCheckTicks = 100.0;
+
+    //   Wrecks
     public static int FadeWrecksAfter = 0;
-    public static int ManOverBoardTimeout = 60;
-    public static int FireballLifespan = 6;
+    public static int FadeTickCooldown = 20;
+    public static double FadePercentageOfWreckPerCycle = 10.0;
+    public static Map<BlockType, Integer> ExtraFadeTimePerBlock = new HashMap<>();
+
+    //   Repairs
     public static int RepairTicksPerBlock = 0;
-    public static int BlockQueueChunkSize = 1000;
+    public static double RepairMaxPercent = 50;
     public static double RepairMoneyPerBlock = 0.0;
-    public static boolean FireballPenetration = true;
+
+
+    // Crew
+    public static boolean ReleaseOnCrewDeath;
+    public static int CrewInviteTimeout;
+
+    // ManOverboard
+    public static int ManOverboardTimeout = 60;
+    public static double ManOverboardDistance = 1000000;
+
+    // Signs
     public static boolean EnableCrewSigns = true;
+    public static HashSet<String> ForbiddenRemoteSigns;
+    public static boolean RequireCreateSignPerm = false;
+    public static boolean RequireNamePerm = false;
+    public static int MaxRemoteSigns = -1;
     // TODO - Should we be overriding /home ?
     //public static boolean SetHomeToCrewSign = true;
+
+
+    // Combat Related
+    //   Armour
     public static Map<BlockType, ArrayList<Double>> DurabilityOverride;
-    public static HashSet<BlockType> DisableShadowBlocks;
-    public static boolean ReleaseOnCrewDeath;
-    public static int InviteTimeout;
-    public static HashSet<BlockType> FlightDeckBlocks;
+
+    //   TNT
+    public static int TracerRateTicks = 5;
+    public static boolean TNTContactExplosives = true;
+
+    //   Fireballs
+    public static int FireballLifespan = 6;
+    public static boolean FireballPenetration = true;
+
+    //   Ammo
     public static int AmmoDetonationMultiplier;
+
+    //   Torpedo Style Crafts
+    public static int CollisionPrimer = 1000;
 
 
     static void load(ConfigurationNode mainConfigNode) {
@@ -63,9 +102,10 @@ public class Settings {
 
         try {
             // if the PilotTool is specified in the movecraft.cfg file, use it
-            if (mainConfigNode.getNode("PilotTool").getValue(TypeToken.of(ItemType.class)) != null) {
-                logger.info("Recognized PilotTool setting of: " + mainConfigNode.getNode("PilotTool").getValue(TypeToken.of(ItemType.class)));
-                pilotStick = mainConfigNode.getNode("PilotTool").getValue(TypeToken.of(ItemType.class));
+            ItemType temp = mainConfigNode.getNode("PilotTool").getValue(TypeToken.of(ItemType.class));
+            if (temp != null) {
+                logger.info("Recognized PilotTool setting of: " + temp);
+                pilotStick = temp;
             }
         } catch (ObjectMappingException e) {
             e.printStackTrace();
@@ -81,7 +121,7 @@ public class Settings {
 
         Settings.SinkCheckTicks = mainConfigNode.getNode("SinkCheckTicks").getDouble(100.0);
         Settings.TracerRateTicks = mainConfigNode.getNode("TracerRateTicks").getInt(5);
-        Settings.ManOverBoardTimeout = mainConfigNode.getNode("ManOverBoardTimeout").getInt(30);
+        Settings.ManOverboardTimeout = mainConfigNode.getNode("ManOverBoardTimeout").getInt(30);
         Settings.SilhouetteViewDistance = mainConfigNode.getNode("SilhouetteViewDistance").getInt(200);
         Settings.SilhouetteBlockCount = mainConfigNode.getNode("SilhouetteBlockCount").getInt(20);
         Settings.FireballLifespan = mainConfigNode.getNode("FireballLifespan").getInt(6);
@@ -97,7 +137,8 @@ public class Settings {
 
         try {
             Map<BlockType, ArrayList<Double>> tempMap =
-                    mainConfigNode.getNode("DurabilityOverride").getValue(new TypeToken<Map<BlockType, ArrayList<Double>>>() {});
+                    mainConfigNode.getNode("DurabilityOverride").getValue(new TypeToken<Map<BlockType, ArrayList<Double>>>() {
+                    });
 
             if (tempMap != null) {
                 tempMap.forEach((blockType, doubles) -> {
@@ -112,14 +153,15 @@ public class Settings {
         }
 
         try {
-            Settings.DisableShadowBlocks = new HashSet<>(mainConfigNode.getNode("DisableShadowBlocks").getList(TypeToken.of(BlockType.class)));  //REMOVE FOR PUBLIC VERSION
+            Settings.DisableShadowBlocks =
+                    new HashSet<>(mainConfigNode.getNode("DisableShadowBlocks").getList(TypeToken.of(BlockType.class)));  //REMOVE FOR PUBLIC VERSION
         } catch (ObjectMappingException e) {
             e.printStackTrace();
 
             Settings.DisableShadowBlocks = new HashSet<>();
         }
 
-        Settings.InviteTimeout = mainConfigNode.getNode("InviteTimeout").getInt(60*20); // default = 1 minute
+        Settings.CrewInviteTimeout = mainConfigNode.getNode("InviteTimeout").getInt(60 * 20); // default = 1 minute
 
         try {
             Settings.FlightDeckBlocks = new HashSet<>(mainConfigNode.getNode("FlightDeckBlocks").getList(TypeToken.of(BlockType.class)));
@@ -132,11 +174,10 @@ public class Settings {
         Settings.AmmoDetonationMultiplier = mainConfigNode.getNode("AmmoDetonationMultiplier").getInt(0);
 
 
-        /* TODO: Re-enable this?
-        if (!Settings.CompatibilityMode) {
-            for (BlockType typ : Settings.DisableShadowBlocks) {
-                worldHandler.disableShadow(typ);
-            }
+        // TODO: Re-enable this?
+        /*
+        for (BlockType typ : Settings.DisableShadowBlocks) {
+            worldHandler.disableShadow(typ);
         }
         */
     }

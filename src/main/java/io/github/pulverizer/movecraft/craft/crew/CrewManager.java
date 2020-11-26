@@ -37,7 +37,7 @@ public class CrewManager {
     }
 
     private void cleanPendingInvites() {
-        pendingInvites.removeIf(invite -> invite.getTicksSinceSent() > Settings.InviteTimeout);
+        pendingInvites.removeIf(invite -> invite.getTicksSinceSent() > Settings.CrewInviteTimeout);
     }
 
     public void createInvite(Player sender, Player invited) {
