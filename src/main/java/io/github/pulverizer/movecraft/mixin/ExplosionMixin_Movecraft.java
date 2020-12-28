@@ -154,7 +154,7 @@ public abstract class ExplosionMixin_Movecraft {
                                     if (Settings.DurabilityOverride != null && Settings.DurabilityOverride.containsKey(blockType)) {
                                         double rayStrength = (f * 3) - 0.3;
 
-                                        if (resistance > rayStrength && Settings.DurabilityOverride.get(blockType).get(1) * bonus < rayStrength) {
+                                        if (rayStrength <= resistance && rayStrength > Settings.DurabilityOverride.get(blockType).get(1) * bonus) {
                                             int chance = (int) ((rayStrength / resistance)
                                                     * Settings.DurabilityOverride.get(blockType).get(2) * 10
                                                     * Math.max(Math.min(1 - (new Vector3d(d4, d6, d8).distance(x, y, z) / (double) size), 1), 0));
