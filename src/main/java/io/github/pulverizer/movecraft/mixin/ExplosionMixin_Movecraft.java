@@ -242,9 +242,7 @@ public abstract class ExplosionMixin_Movecraft {
 
         final Vec3d vec3d = new Vec3d(this.x, this.y, this.z);
 
-        for (int k2 = 0; k2 < list.size(); ++k2) {
-            final Entity entity = list.get(k2);
-
+        for (final Entity entity : list) {
             if (!entity.isImmuneToExplosions()) {
                 final double d12 = entity.getDistance(this.x, this.y, this.z) / (double) f3;
 
@@ -271,9 +269,9 @@ public abstract class ExplosionMixin_Movecraft {
                         }
 
                         //Sponge Start
-                        entity.motionX += d5 * d11 * ((ExplosionBridge) this).bridge$getKnockback();
-                        entity.motionY += d7 * d11 * ((ExplosionBridge) this).bridge$getKnockback();
-                        entity.motionZ += d9 * d11 * ((ExplosionBridge) this).bridge$getKnockback();
+                        entity.motionX += d5 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2.5;
+                        entity.motionY += d7 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2.5;
+                        entity.motionZ += d9 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2.5;
 
                         if (entity instanceof EntityPlayer) {
                             final EntityPlayer entityplayer = (EntityPlayer) entity;
@@ -281,9 +279,9 @@ public abstract class ExplosionMixin_Movecraft {
                             if (!entityplayer.isSpectator() && (!entityplayer.isCreative() || !entityplayer.capabilities.isFlying)) {
                                 //Movecraft - players should also benefit from Blast Protection enchant reducing knockback
                                 this.playerKnockbackMap.put(entityplayer,
-                                        new Vec3d(d5 * d11 * ((ExplosionBridge) this).bridge$getKnockback(),
-                                                d7 * d11 * ((ExplosionBridge) this).bridge$getKnockback(),
-                                                d9 * d11 * ((ExplosionBridge) this).bridge$getKnockback()));
+                                        new Vec3d(d5 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2.5,
+                                                d7 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2.5,
+                                                d9 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2.5));
                                 //Sponge End
                             }
                         }
