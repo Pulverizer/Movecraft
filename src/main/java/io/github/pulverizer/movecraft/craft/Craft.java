@@ -31,7 +31,6 @@ import org.spongepowered.api.item.inventory.Inventory;
 import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.chat.ChatTypes;
-import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
@@ -676,12 +675,12 @@ public class Craft {
                 if (world.getTileEntity(furnaceLocation).isPresent() && world.getTileEntity(furnaceLocation).get() instanceof TileEntityCarrier) {
                     Inventory inventory = ((TileEntityCarrier) world.getTileEntity(furnaceLocation).get()).getInventory();
 
-                    Set<ItemType> fuelItems = getType().getFuelItems().keySet();
+                    Set<ItemType> fuelItems = getType().getFuelTypes().keySet();
 
                     for (ItemType fuelItem : fuelItems) {
                         if (inventory.contains(fuelItem)) {
 
-                            double fuelItemValue = getType().getFuelItems().get(fuelItem);
+                            double fuelItemValue = getType().getFuelTypes().get(fuelItem);
 
                             int oldValue = (int) Math.ceil((requiredPoints - movePoints) / fuelItemValue);
                             int newValue = inventory.query(QueryOperationTypes.ITEM_TYPE.of(fuelItem)).poll(oldValue).get().getQuantity();
@@ -726,12 +725,12 @@ public class Craft {
             if (world.getTileEntity(furnaceLocation).isPresent() && world.getTileEntity(furnaceLocation).get() instanceof TileEntityCarrier) {
                 Inventory inventory = ((TileEntityCarrier) world.getTileEntity(furnaceLocation).get()).getInventory();
 
-                Set<ItemType> fuelItems = getType().getFuelItems().keySet();
+                Set<ItemType> fuelItems = getType().getFuelTypes().keySet();
 
                 for (ItemType fuelItem : fuelItems) {
                     if (inventory.contains(fuelItem)) {
 
-                        fuelStored += inventory.query(QueryOperationTypes.ITEM_TYPE.of(fuelItem)).totalItems() * getType().getFuelItems().get(fuelItem);
+                        fuelStored += inventory.query(QueryOperationTypes.ITEM_TYPE.of(fuelItem)).totalItems() * getType().getFuelTypes().get(fuelItem);
 
                     }
                 }
@@ -1128,10 +1127,10 @@ public class Craft {
     }
 
     public boolean hasCooldownExpired() {
-        long ticksElapsed = Sponge.getServer().getRunningTimeTicks() - lastMoveTick;
+        double ticksElapsed = Sponge.getServer().getRunningTimeTicks() - lastMoveTick;
         //TODO: Replace world.getSeaLevel() with something better
-        if (type.getHalfSpeedUnderwater() && hitBox.getMinY() < world.getSeaLevel())
-            ticksElapsed >>= 1;
+        if (type.getUnderwaterSpeedMultiplier() > 0 && hitBox.getMinY() < world.getSeaLevel())
+            ticksElapsed = ticksElapsed * type.getUnderwaterSpeedMultiplier();
 
         return getTickCooldown() < ticksElapsed;
     }
