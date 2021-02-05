@@ -269,9 +269,9 @@ public abstract class ExplosionMixin_Movecraft {
                         }
 
                         //Sponge Start
-                        entity.motionX += d5 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2.5;
-                        entity.motionY += d7 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2.5;
-                        entity.motionZ += d9 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2.5;
+                        entity.motionX += d5 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2;
+                        entity.motionY += d7 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2;
+                        entity.motionZ += d9 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2;
 
                         if (entity instanceof EntityPlayer) {
                             final EntityPlayer entityplayer = (EntityPlayer) entity;
@@ -279,9 +279,9 @@ public abstract class ExplosionMixin_Movecraft {
                             if (!entityplayer.isSpectator() && (!entityplayer.isCreative() || !entityplayer.capabilities.isFlying)) {
                                 //Movecraft - players should also benefit from Blast Protection enchant reducing knockback
                                 this.playerKnockbackMap.put(entityplayer,
-                                        new Vec3d(d5 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2.5,
-                                                d7 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2.5,
-                                                d9 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2.5));
+                                        new Vec3d(d5 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2,
+                                                d7 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2,
+                                                d9 * d11 * ((ExplosionBridge) this).bridge$getKnockback() * 2));
                                 //Sponge End
                             }
                         }
