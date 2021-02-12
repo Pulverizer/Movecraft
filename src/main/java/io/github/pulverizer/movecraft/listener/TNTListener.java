@@ -239,12 +239,12 @@ public class TNTListener {
     @Listener
     public void tntBlastCondenser(ExplosionEvent.Pre event) {
 
-        if (Settings.Debug) {
-            Movecraft.getInstance().getLogger().info("Was BOOM: " + event.getExplosion().getRadius());
-        }
-
         if (!event.getExplosion().getSourceExplosive().isPresent() || !(event.getExplosion().getSourceExplosive().get() instanceof PrimedTNT)) {
             return;
+        }
+
+        if (Settings.Debug) {
+            Movecraft.getInstance().getLogger().info("TNT explosion detected: " + event.getExplosion().getRadius());
         }
 
         if (tntControlTimer < Sponge.getServer().getRunningTimeTicks()) {
@@ -276,15 +276,11 @@ public class TNTListener {
                 return true;
             }
 
-            if (tnt.getFuseData().ticksRemaining().get() < eventTNT.getFuseData().ticksRemaining().get() - 1) {
-                return true;
-            }
-
-            return false;
+            return tnt.getFuseData().ticksRemaining().get() < eventTNT.getFuseData().ticksRemaining().get() - 1;
         });
 
         if (Settings.Debug) {
-            Movecraft.getInstance().getLogger().info("Entity Count: " + entities.size());
+            Movecraft.getInstance().getLogger().info("Exploding TNT in Area: " + entities.size());
         }
 
         int tntFound = 0;
@@ -319,7 +315,7 @@ public class TNTListener {
         for (int i = 0; i < power16Explosions; i++) {
 
             if (Settings.Debug) {
-                Movecraft.getInstance().getLogger().info("Should BOOM: 16");
+                Movecraft.getInstance().getLogger().info("Compressing to MAX: 16");
             }
 
             explosion = Explosion.builder()
@@ -338,7 +334,7 @@ public class TNTListener {
         float finalExplosion = Math.min((float) shrapnelFound / 4 + tntFound, 16);
 
         if (Settings.Debug) {
-            Movecraft.getInstance().getLogger().info(String.format("Did Boom: %.2f (%d, %.2f)", finalExplosion, tntFound,
+            Movecraft.getInstance().getLogger().info(String.format("Compressed to: %.2f (%d Direct, %.2f Shrapnel)", finalExplosion, tntFound,
                     (float) shrapnelFound / 4));
         }
 
