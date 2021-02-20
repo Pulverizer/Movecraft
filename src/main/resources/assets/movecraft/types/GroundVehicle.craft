@@ -1,0 +1,134 @@
+name: GroundVehicle
+maxSize: 450
+minSize: 10
+
+allowedBlocks: 
+    - minecraft:glowstone # LIGHTING
+    - minecraft:redstone_lamp
+    - minecraft:lit_redstone_lamp
+    - minecraft:sea_lantern
+    - minecraft:torch
+    - minecraft:chest # CARGO
+    - minecraft:trapped_chest
+    - minecraft:flower_pot # DECOR
+    - minecraft:gold_block
+    - minecraft:emerald_block
+    - minecraft:diamond_block
+    - minecraft:lapis_block
+    - minecraft:netherrack
+    - minecraft:fire
+    - minecraft:tripwire_hook
+    - minecraft:cauldron
+    - minecraft:carpet
+    - minecraft:redstone_block # other
+    - minecraft:iron_block # other
+    - minecraft:redstone_wire # WEAPONS
+    - minecraft:unlit_redstone_torch
+    - minecraft:redstone_torch
+    - minecraft:unpowered_repeater
+    - minecraft:powered_repeater
+    - minecraft:unpowered_comparator
+    - minecraft:powered_comparator
+    - minecraft:observer
+    - minecraft:dispenser
+    - minecraft:redstone_block
+    - minecraft:coal_block
+    - minecraft:lever
+    - minecraft:stone_button
+    - minecraft:wooden_button
+    - minecraft:dropper
+    - minecraft:hopper
+    - minecraft:packed_ice
+    - minecraft:trapdoor
+    - minecraft:iron_trapdoor
+    - minecraft:fence
+    - minecraft:nether_brick_fence
+    - minecraft:spruce_fence
+    - minecraft:birch_fence
+    - minecraft:jungle_fence
+    - minecraft:dark_oak_fence
+    - minecraft:acacia_fence
+    - minecraft:fence_gate
+    - minecraft:spruce_fence_gate
+    - minecraft:birch_fence_gate
+    - minecraft:jungle_fence_gate
+    - minecraft:dark_oak_fence_gate
+    - minecraft:acacia_fence_gate
+    - minecraft:stone_pressure_plate
+    - minecraft:wooden_pressure_plate
+    - minecraft:light_weighted_pressure_plate
+    - minecraft:heavy_weighted_pressure_plate
+    - minecraft:slime
+    - minecraft:sticky_piston
+    - minecraft:piston
+    - minecraft:piston_head
+    - minecraft:flowing_lava # other
+    - minecraft:lava # other
+    - minecraft:flowing_water # other
+    - minecraft:water # other
+    - minecraft:glass # STRUCTURE
+    - minecraft:stained_glass
+    - minecraft:glass_pane
+    - minecraft:stained_glass_pane
+    - minecraft:wooden_door
+    - minecraft:spruce_door
+    - minecraft:birch_door
+    - minecraft:jungle_door
+    - minecraft:acacia_door
+    - minecraft:dark_oak_door
+    - minecraft:iron_door
+    - minecraft:trapdoor
+    - minecraft:iron_trapdoor
+    - minecraft:ladder
+    - minecraft:furnace
+    - minecraft:lit_furnace
+    - minecraft:dropper
+    - minecraft:hopper
+    - minecraft:standing_sign
+    - minecraft:wall_sign
+    - minecraft:double_stone_slab # ARMOUR Blue
+    - minecraft:stone_slab
+    - minecraft:double_stone_slab # ARMOUR Green
+    - minecraft:stone_slab
+    - minecraft:nether_brick_stairs
+    - minecraft:red_nether_brick
+    - minecraft:double_stone_slab # ARMOUR Yellow
+    - minecraft:stone_slab
+    - minecraft:quartz_stairs
+
+forbiddenBlocks:
+    - minecraft:piston_head
+
+canHover: true
+canHoverOverWater: false
+hoverLimit: 0
+useGravity: true
+
+speed: 1.5
+canCruise: true
+cruiseSkipBlocks: 0
+rotateAtMidpoint: true
+
+overallSinkPercent: 75.0
+sinkPercent: 99.0
+
+fuelBurnRate: 2.0
+
+moveblocks:
+    ["minecraft:redstone_block","minecraft:iron_block"]: # redstone represents engines
+        - 2.0
+        - 100.0
+
+flyblocks:
+    ["minecraft:chest","minecraft:trapped_chest", "minecraft:dispenser","minecraft:hopper","minecraft:dropper"]: # limit chests to make big airships important for merchant missions. dispensers and hoppers can be used for inventory too, so limit them as well
+        - 0.0
+        - 5.7
+    "minecraft:furnace": # Furnaces for cargo? really guys?
+        - 0.0
+        - N5
+    "minecraft:anvil": # anvils are OP armor, so limit it
+        - 0.0
+        - N5
+    ["minecraft:flowing_water","minecraft:water","minecraft:flowing_lava","minecraft:lava"]: # so is water/lava
+        - 0.0
+        - 1.0

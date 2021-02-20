@@ -1,0 +1,43 @@
+name: Bomb
+maxSize: 5
+minSize: 1
+
+allowedBlocks: 
+    - minecraft:coal_block
+
+forbiddenBlocks:
+    - minecraft:bedrock
+
+canCruise: true
+cruiseOnPilot: true
+cruiseOnPilotVertDirection: -1
+vertCruiseSkipBlocks: 2
+
+allowHorizontalMovement: false
+
+detectionMultiplier: 40.0
+underwaterDetectionMultiplier: 4.0
+
+collisionExplosion: 2.7
+explodeOnCrash: 3.0
+focusedExplosion: true
+
+moveEntities: false
+canHaveCrew: false
+mustBeSubcraft: true
+
+speed: 10.0
+targetMoveTime: 2.0
+
+overallSinkPercent: 75.0
+
+passthroughBlocks: 
+    - minecraft:water
+    - minecraft:flowing_water
+    
+flyblocks:
+    "minecraft:coal_block":
+        - 10.0
+        - 100.0
+
+

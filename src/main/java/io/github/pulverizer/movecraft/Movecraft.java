@@ -97,6 +97,7 @@ public class Movecraft {
         instance = this;
         logger = getLogger();
 
+        ConfigManager.checkSpongeConfig();
         ConfigManager.loadMainConfig();
 
         //TODO: Re-add commands!
