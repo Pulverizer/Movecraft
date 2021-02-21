@@ -73,6 +73,8 @@ public abstract class AsyncTask {
         getNotificationPlayer().ifPresent(player -> player.sendMessage(Text.of(type + " Failed: " + message)));
 
         Movecraft.getInstance().getLogger().info("Craft " + type + " Failed: " + getFailMessage());
+
+        craft.setProcessing(false);
     }
 
     public boolean failed() {
