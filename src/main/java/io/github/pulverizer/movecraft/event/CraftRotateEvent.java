@@ -12,6 +12,7 @@ import org.spongepowered.api.event.cause.Cause;
  */
 @SuppressWarnings("unused")
 public class CraftRotateEvent extends CraftEvent implements Cancellable {
+
     private final HitBox oldHitBox;
     private final HitBox newHitBox;
     private String failMessage = "";
@@ -27,7 +28,7 @@ public class CraftRotateEvent extends CraftEvent implements Cancellable {
         return newHitBox;
     }
 
-    public HitBox getOldHitBox(){
+    public HitBox getOldHitBox() {
         return oldHitBox;
     }
 

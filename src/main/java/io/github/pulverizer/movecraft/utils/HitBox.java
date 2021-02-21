@@ -3,7 +3,10 @@ package io.github.pulverizer.movecraft.utils;
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.exception.EmptyHitBoxException;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 public interface HitBox extends Iterable<Vector3i> {
 

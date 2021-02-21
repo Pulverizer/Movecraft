@@ -8,10 +8,11 @@ import org.spongepowered.api.event.cause.Cause;
  * @see Craft
  */
 @SuppressWarnings("unused")
-public class CraftPilotEvent extends CraftEvent{
+public class CraftPilotEvent extends CraftEvent {
+
     private final Reason reason;
 
-    public CraftPilotEvent(Craft craft, Reason reason){
+    public CraftPilotEvent(Craft craft, Reason reason) {
         super(craft);
         this.reason = reason;
     }
@@ -25,7 +26,7 @@ public class CraftPilotEvent extends CraftEvent{
         return null;
     }
 
-    public enum Reason{
-        SUB_CRAFT,PLAYER,FORCE
+    public enum Reason {
+        SUB_CRAFT, PLAYER, FORCE
     }
 }

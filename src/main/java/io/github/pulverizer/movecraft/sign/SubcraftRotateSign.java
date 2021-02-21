@@ -2,11 +2,12 @@ package io.github.pulverizer.movecraft.sign;
 
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.Movecraft;
+import io.github.pulverizer.movecraft.config.CraftType;
 import io.github.pulverizer.movecraft.config.Settings;
-import io.github.pulverizer.movecraft.enums.Rotation;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
-import io.github.pulverizer.movecraft.config.CraftType;
+import io.github.pulverizer.movecraft.enums.Rotation;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.tileentity.Sign;
 import org.spongepowered.api.data.value.mutable.ListValue;
@@ -27,6 +28,7 @@ import org.spongepowered.api.world.World;
  * @version 1.4 - 20 Apr 2020
  */
 public final class SubcraftRotateSign {
+
     private static final String HEADER = "Subcraft Rotate";
 
     public static void onSignChange(ChangeSignEvent event, Player player) {
@@ -42,14 +44,15 @@ public final class SubcraftRotateSign {
         Rotation rotation;
         if (event instanceof InteractBlockEvent.Secondary) {
             rotation = Rotation.CLOCKWISE;
-        }else if(event instanceof InteractBlockEvent.Primary){
+        } else if (event instanceof InteractBlockEvent.Primary) {
             rotation = Rotation.ANTICLOCKWISE;
-        }else{
+        } else {
             return;
         }
 
-        if (!block.getLocation().isPresent() || !block.getLocation().get().getTileEntity().isPresent())
+        if (!block.getLocation().isPresent() || !block.getLocation().get().getTileEntity().isPresent()) {
             return;
+        }
 
         Sign sign = (Sign) block.getLocation().get().getTileEntity().get();
         ListValue<Text> lines = sign.lines();
@@ -71,7 +74,8 @@ public final class SubcraftRotateSign {
             sign.offer(lines);
         }
 
-        if (!player.hasPermission("movecraft." + craftTypeStr + ".crew.command") && (type.requiresSpecificPerms() || !player.hasPermission("movecraft.crew.command"))) {
+        if (!player.hasPermission("movecraft." + craftTypeStr + ".crew.command") && (
+                type.getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player.hasPermission("movecraft.crew.command"))) {
             player.sendMessage(Text.of("Insufficient Permissions"));
             return;
         }
@@ -84,13 +88,15 @@ public final class SubcraftRotateSign {
                 break;
             }
         }
-        if(craft != null) {
+        if (craft != null) {
             if (craft.isProcessing()) {
                 player.sendMessage(Text.of("Parent Craft is busy!"));
                 return;
             }
 
-            if (!player.hasPermission("movecraft." + craft.getType().getName().toLowerCase() + ".rotatesubcraft") && (craft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.rotatesubcraft"))) {
+            if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue().toLowerCase() +
+                    ".rotatesubcraft") && (craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player
+                    .hasPermission("movecraft.rotatesubcraft"))) {
                 player.sendMessage(Text.of("Insufficient Permissions"));
                 return;
             }
@@ -116,7 +122,8 @@ public final class SubcraftRotateSign {
                     Task.builder()
                             .delayTicks(3)
                             .execute(() -> subCraft.release(player))
-                            .submit(Movecraft.getInstance()); })
+                            .submit(Movecraft.getInstance());
+                })
                 .submit(Movecraft.getInstance());
     }
 

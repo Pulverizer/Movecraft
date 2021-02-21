@@ -2,6 +2,7 @@ package io.github.pulverizer.movecraft.sign;
 
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.event.CraftDetectEvent;
 import io.github.pulverizer.movecraft.utils.HashHitBox;
@@ -16,7 +17,10 @@ import org.spongepowered.api.text.format.TextColor;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.world.World;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Permissions checked
@@ -39,8 +43,10 @@ public final class StatusSign {
 
         for (Vector3i location : hitBox) {
 
-            if (world.getBlockType(location) != BlockTypes.WALL_SIGN && world.getBlockType(location) != BlockTypes.STANDING_SIGN || !world.getTileEntity(location).isPresent())
+            if (world.getBlockType(location) != BlockTypes.WALL_SIGN && world.getBlockType(location) != BlockTypes.STANDING_SIGN || !world
+                    .getTileEntity(location).isPresent()) {
                 continue;
+            }
 
             Sign sign = (Sign) world.getTileEntity(location).get();
             ListValue<Text> lines = sign.lines();
@@ -68,13 +74,14 @@ public final class StatusSign {
         blockMap.forEach((blockType, locations) -> foundBlocks.put(blockType, locations.size()));
 
         //Fly Blocks
-        if (!craft.getType().getFlyBlocks().isEmpty()) {
+        if (!craft.getType().getSetting(Defaults.FlyBlocks.class).get().getValue().isEmpty()) {
 
             BlockType flyBlock = BlockTypes.AIR;
             double percentFB = 0d;
             double minimumFB = 0d;
 
-            for (Map.Entry<List<BlockType>, List<Double>> flyBlockMapEntry : craft.getType().getFlyBlocks().entrySet()) {
+            for (Map.Entry<List<BlockType>, List<Double>> flyBlockMapEntry :
+                    craft.getType().getSetting(Defaults.FlyBlocks.class).get().getValue().entrySet()) {
 
                 Double minimum = flyBlockMapEntry.getValue().get(0);
 
@@ -82,12 +89,14 @@ public final class StatusSign {
                     int amount = 0;
 
                     for (BlockType blockType : flyBlockMapEntry.getKey()) {
-                        if (foundBlocks.containsKey(blockType))
+                        if (foundBlocks.containsKey(blockType)) {
                             amount += foundBlocks.get(blockType);
+                        }
                     }
 
-                    if (amount <= 0)
+                    if (amount <= 0) {
                         continue;
+                    }
 
                     Double percentPresent = amount * 100 / totalBlocks;
 
@@ -124,12 +133,13 @@ public final class StatusSign {
         }
 
         //Move Blocks
-        if (!craft.getType().getMoveBlocks().isEmpty()) {
+        if (!craft.getType().getSetting(Defaults.MoveBlocks.class).get().getValue().isEmpty()) {
             BlockType moveBlock = BlockTypes.AIR;
             double percentMB = 0d;
             double minimumMB = 0d;
 
-            for (Map.Entry<List<BlockType>, List<Double>> moveBlockMapEntry : craft.getType().getMoveBlocks().entrySet()) {
+            for (Map.Entry<List<BlockType>, List<Double>> moveBlockMapEntry :
+                    craft.getType().getSetting(Defaults.MoveBlocks.class).get().getValue().entrySet()) {
 
                 Double minimum = moveBlockMapEntry.getValue().get(0);
 
@@ -137,12 +147,14 @@ public final class StatusSign {
                     double amount = 0;
 
                     for (BlockType blockType : moveBlockMapEntry.getKey()) {
-                        if (foundBlocks.containsKey(blockType))
+                        if (foundBlocks.containsKey(blockType)) {
                             amount += foundBlocks.get(blockType);
+                        }
                     }
 
-                    if (amount <= 0)
+                    if (amount <= 0) {
                         continue;
+                    }
 
                     Double percentPresent = amount * 100 / totalBlocks;
 
@@ -178,14 +190,15 @@ public final class StatusSign {
             }
         }
 
-        int fuelRange = (int) Math.floor((fuel * (1 + craft.getType().getCruiseSkipBlocks())) / craft.getType().getFuelBurnRate());
+        int fuelRange =
+                (int) Math.floor((fuel * (1 + craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue())) / craft.getType().getSetting(Defaults.FuelBurnRate.class).get().getValue());
         TextColor fuelColor;
 
         //TODO: Add default to craft config
         //  Add new sign type "Fuel Range:" which allows the player to set it per craft
-        if(fuelRange > 10000) {
+        if (fuelRange > 10000) {
             fuelColor = TextColors.GREEN;
-        } else if(fuelRange > 2500) {
+        } else if (fuelRange > 2500) {
             fuelColor = TextColors.YELLOW;
         } else {
             fuelColor = TextColors.RED;

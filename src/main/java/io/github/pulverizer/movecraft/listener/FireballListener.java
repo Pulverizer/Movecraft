@@ -3,9 +3,9 @@ package io.github.pulverizer.movecraft.listener;
 import com.flowpowered.math.imaginary.Quaterniond;
 import com.flowpowered.math.vector.Vector3d;
 import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.tileentity.carrier.Dispenser;
 import org.spongepowered.api.data.key.Keys;
@@ -29,23 +29,28 @@ public class FireballListener {
     @Listener
     public void fireballTracking(MoveEntityEvent event, @Getter("getTargetEntity") SmallFireball fireball) {
 
-        if (!(fireball.getShooter() instanceof Dispenser))
+        if (!(fireball.getShooter() instanceof Dispenser)) {
             return;
+        }
 
         if (!FireballTracking.containsKey(fireball)) {
 
             Craft craft = CraftManager.getInstance().getCraftFromLocation(((Dispenser) fireball.getShooter()).getLocation());
 
-            if (craft != null && craft.getType().allowAADirectors()) {
+            if (craft != null && craft.getType().getSetting(Defaults.CanHaveAADirectors.class).get().getValue()) {
 
                 Player player = craft.getAADirectorFor(fireball);
 
-                if (player != null && player.getItemInHand(HandTypes.MAIN_HAND).isPresent() && player.getItemInHand(HandTypes.MAIN_HAND).get().getType() == Settings.PilotTool) {
+                if (player != null && player.getItemInHand(HandTypes.MAIN_HAND).isPresent()
+                        && player.getItemInHand(HandTypes.MAIN_HAND).get().getType() == Settings.PilotTool) {
 
                     if (craft.getHitBox().contains(((Dispenser) fireball.getShooter()).getLocation().getBlockPosition())) {
                         Vector3d fireballVelocity = fireball.getVelocity();
-                        double speed = fireballVelocity.length(); // store the speed to add it back in later, since all the values we will be using are "normalized", IE: have a speed of 1
-                        fireballVelocity = fireballVelocity.normalize(); // you normalize it for comparison with the new direction to see if we are trying to steer too far
+                        double speed = fireballVelocity
+                                .length(); // store the speed to add it back in later, since all the values we will be using are "normalized", IE:
+                        // have a speed of 1
+                        fireballVelocity = fireballVelocity
+                                .normalize(); // you normalize it for comparison with the new direction to see if we are trying to steer too far
 
                         BlockSnapshot targetBlock = null;
                         Optional<BlockRayHit<World>> blockRayHit = BlockRay
@@ -115,8 +120,9 @@ public class FireballListener {
         // then, removed any expired fireballs from tracking
         FireballTracking.keySet().removeIf(testFireball -> {
 
-            if (testFireball == null)
+            if (testFireball == null) {
                 return true;
+            }
 
             if (System.currentTimeMillis() - FireballTracking.get(testFireball) > timeLimit) {
                 testFireball.remove();

@@ -14,6 +14,7 @@ import org.spongepowered.api.event.block.InteractBlockEvent;
  * @version 1.4 - 20 Apr 2020
  */
 public class PilotSign {
+
     private static final String HEADER = "Pilot";
 
     public static void onSignClick(InteractBlockEvent event, Player player, BlockSnapshot block) {
@@ -22,7 +23,7 @@ public class PilotSign {
             return;
         }
 
-        if(event instanceof InteractBlockEvent.Primary){
+        if (event instanceof InteractBlockEvent.Primary) {
             CrewManager.getInstance().resetRole(player);
             return;
         }

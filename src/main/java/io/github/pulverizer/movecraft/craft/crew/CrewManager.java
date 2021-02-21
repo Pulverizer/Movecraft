@@ -2,6 +2,7 @@ package io.github.pulverizer.movecraft.craft.crew;
 
 import io.github.pulverizer.movecraft.Movecraft;
 import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import org.spongepowered.api.Sponge;
@@ -15,12 +16,14 @@ import java.util.Set;
 import java.util.UUID;
 
 public class CrewManager {
+
     private static CrewManager ourInstance;
     private final HashSet<CrewInvite> pendingInvites = new HashSet<>();
 
-    private CrewManager() {}
+    private CrewManager() {
+    }
 
-    private static void initialize(){
+    private static void initialize() {
         ourInstance = new CrewManager();
 
         Task.builder()
@@ -31,7 +34,9 @@ public class CrewManager {
     }
 
     public static CrewManager getInstance() {
-        if (ourInstance == null) initialize();
+        if (ourInstance == null) {
+            initialize();
+        }
 
         return ourInstance;
     }
@@ -52,12 +57,15 @@ public class CrewManager {
             return;
         }
 
-        if (!sender.hasPermission("movecraft." + craft.getType().getName() + ".crew.invite") && (craft.getType().requiresSpecificPerms() || !sender.hasPermission("movecraft.crew.invite"))) {
+        if (!sender.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".crew.invite") && (
+                craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !sender
+                        .hasPermission("movecraft.crew.invite"))) {
             sender.sendMessage(Text.of("Insufficient Permissions"));
             return;
         }
 
-        if (!invited.hasPermission("movecraft." + craft.getType().getName() + ".crew.join") && (craft.getType().requiresSpecificPerms() || !invited.hasPermission("movecraft.crew.join"))) {
+        if (!invited.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".crew.join") && (
+                craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !invited.hasPermission("movecraft.crew.join"))) {
             sender.sendMessage(Text.of("Insufficient Permissions - Target player does not have necessary permissions."));
             return;
         }
@@ -88,7 +96,8 @@ public class CrewManager {
                 if (craft != null) {
                     craft.addCrewMember(player.getUniqueId());
                     player.sendMessage(Text.of("Welcome to the crew!"));
-                    Sponge.getServer().getPlayer(craft.getCommander()).ifPresent(commander -> commander.sendMessage(Text.of(player.getName() + " has joined your crew.")));
+                    Sponge.getServer().getPlayer(craft.getCommander())
+                            .ifPresent(commander -> commander.sendMessage(Text.of(player.getName() + " has joined your crew.")));
                 } else {
                     player.sendMessage(Text.of("Invite Invalid - Craft no longer exists."));
                 }
@@ -115,7 +124,8 @@ public class CrewManager {
             sender.sendMessage(Text.of("You are not the commander of your craft."));
         }
 
-        if (!sender.hasPermission("movecraft." + craft.getType().getName() + ".crew.kick") && (craft.getType().requiresSpecificPerms() || !sender.hasPermission("movecraft.crew.kick"))) {
+        if (!sender.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".crew.kick") && (
+                craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !sender.hasPermission("movecraft.crew.kick"))) {
             sender.sendMessage(Text.of("Insufficient Permissions"));
             return;
         }
@@ -139,7 +149,9 @@ public class CrewManager {
             return;
         }
 
-        if (!player.hasPermission("movecraft." + craft.getType().getName() + ".crew.command") && (craft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.crew.command"))) {
+        if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".crew.command") && (
+                craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player
+                        .hasPermission("movecraft.crew.command"))) {
             sender.sendMessage(Text.of("Insufficient Permissions - Target player does not have necessary permissions."));
             return;
         }
@@ -163,7 +175,9 @@ public class CrewManager {
             return;
         }
 
-        if (!player.hasPermission("movecraft." + craft.getType().getName() + ".crew.command") && (craft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.crew.command"))) {
+        if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".crew.command") && (
+                craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player
+                        .hasPermission("movecraft.crew.command"))) {
             sender.sendMessage(Text.of("Insufficient Permissions - Target player does not have necessary permissions."));
             return;
         }
@@ -182,7 +196,8 @@ public class CrewManager {
             return;
         }
 
-        if (!player.hasPermission("movecraft." + craft.getType().getName() + ".crew.pilot") && (craft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.crew.pilot"))) {
+        if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".crew.pilot") && (
+                craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player.hasPermission("movecraft.crew.pilot"))) {
             player.sendMessage(Text.of("Insufficient Permissions"));
             return;
         }
@@ -200,12 +215,14 @@ public class CrewManager {
             return;
         }
 
-        if (!craft.getType().allowAADirectors()) {
+        if (!craft.getType().getSetting(Defaults.CanHaveAADirectors.class).get().getValue()) {
             player.sendMessage(Text.of("ERROR: Craft type does not support the AA director role!"));
             return;
         }
 
-        if (!player.hasPermission("movecraft." + craft.getType().getName() + ".crew.directors.aa") && (craft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.crew.directors.aa"))) {
+        if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".crew.directors.aa") && (
+                craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player
+                        .hasPermission("movecraft.crew.directors.aa"))) {
             player.sendMessage(Text.of("Insufficient Permissions"));
             return;
         }
@@ -223,12 +240,14 @@ public class CrewManager {
             return;
         }
 
-        if (!craft.getType().allowCannonDirectors()) {
+        if (!craft.getType().getSetting(Defaults.CanHaveCannonDirectors.class).get().getValue()) {
             player.sendMessage(Text.of("ERROR: Craft type does not support the cannon director role!"));
             return;
         }
 
-        if (!player.hasPermission("movecraft." + craft.getType().getName() + ".crew.directors.cannons") && (craft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.crew.directors.cannons"))) {
+        if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".crew.directors.cannons") && (
+                craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player
+                        .hasPermission("movecraft.crew.directors.cannons"))) {
             player.sendMessage(Text.of("Insufficient Permissions"));
             return;
         }
@@ -246,12 +265,14 @@ public class CrewManager {
             return;
         }
 
-        if (!craft.getType().canHaveLoaders()) {
+        if (!craft.getType().getSetting(Defaults.CanHaveLoaders.class).get().getValue()) {
             player.sendMessage(Text.of("ERROR: Craft type does not support the loader role!"));
             return;
         }
 
-        if (!player.hasPermission("movecraft." + craft.getType().getName() + ".crew.loader") && (craft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.crew.loader"))) {
+        if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".crew.loader") && (
+                craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player
+                        .hasPermission("movecraft.crew.loader"))) {
             player.sendMessage(Text.of("Insufficient Permissions"));
             return;
         }
@@ -269,12 +290,14 @@ public class CrewManager {
             return;
         }
 
-        if (!craft.getType().canHaveRepairmen()) {
+        if (!craft.getType().getSetting(Defaults.CanHaveRepairmen.class).get().getValue()) {
             player.sendMessage(Text.of("ERROR: Craft type does not support the repairman role!"));
             return;
         }
 
-        if (!player.hasPermission("movecraft." + craft.getType().getName() + ".crew.repairman") && (craft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.crew.repairman"))) {
+        if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".crew.repairman") && (
+                craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player
+                        .hasPermission("movecraft.crew.repairman"))) {
             player.sendMessage(Text.of("Insufficient Permissions"));
             return;
         }
@@ -327,28 +350,32 @@ public class CrewManager {
         Set<UUID> crewMembers = craft.getAADirectors();
         if (!crewMembers.isEmpty()) {
             lines.add("AA Directors: ");
-            crewMembers.forEach(aaDirector -> Sponge.getServer().getPlayer(aaDirector).ifPresent(crewMember -> lines.add("                  " + crewMember.getName())));
+            crewMembers.forEach(aaDirector -> Sponge.getServer().getPlayer(aaDirector)
+                    .ifPresent(crewMember -> lines.add("                  " + crewMember.getName())));
             lines.add("");
         }
 
         crewMembers = craft.getCannonDirectors();
         if (!crewMembers.isEmpty()) {
             lines.add("Cannon Directors: ");
-            crewMembers.forEach(cannonDirector -> Sponge.getServer().getPlayer(cannonDirector).ifPresent(crewMember -> lines.add("                  " + crewMember.getName())));
+            crewMembers.forEach(cannonDirector -> Sponge.getServer().getPlayer(cannonDirector)
+                    .ifPresent(crewMember -> lines.add("                  " + crewMember.getName())));
             lines.add("");
         }
 
         crewMembers = craft.getLoaders();
         if (!crewMembers.isEmpty()) {
             lines.add("Loaders: ");
-            crewMembers.forEach(loader -> Sponge.getServer().getPlayer(loader).ifPresent(crewMember -> lines.add("                  " + crewMember.getName())));
+            crewMembers.forEach(
+                    loader -> Sponge.getServer().getPlayer(loader).ifPresent(crewMember -> lines.add("                  " + crewMember.getName())));
             lines.add("");
         }
 
         crewMembers = craft.getRepairmen();
         if (!crewMembers.isEmpty()) {
             lines.add("Repairmen: ");
-            craft.getRepairmen().forEach(repairman -> Sponge.getServer().getPlayer(repairman).ifPresent(crewMember -> lines.add("                  " + crewMember.getName())));
+            craft.getRepairmen().forEach(repairman -> Sponge.getServer().getPlayer(repairman)
+                    .ifPresent(crewMember -> lines.add("                  " + crewMember.getName())));
             lines.add("");
         }
 

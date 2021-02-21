@@ -16,8 +16,8 @@ import java.util.List;
 @Mixin(PlayerChunkMapEntry.class)
 public abstract class PlayerChunkMapEntryMixin_Forge {
 
-    @Final @Shadow private List<EntityPlayerMP> players;
     @Final @Shadow private static Logger LOGGER;
+    @Final @Shadow private List<EntityPlayerMP> players;
     @Final @Shadow private ChunkPos pos;
     @Shadow private long lastUpdateInhabitedTime;
     @Final @Shadow private PlayerChunkMap playerChunkMap;
@@ -57,7 +57,8 @@ public abstract class PlayerChunkMapEntryMixin_Forge {
                 if (this.sentToPlayers) {
                     this.sendToPlayer(player);
                     // chunk watch event - the chunk is ready
-                    net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkWatchEvent.Watch(this.chunk, player));
+                    net.minecraftforge.common.MinecraftForge.EVENT_BUS
+                            .post(new net.minecraftforge.event.world.ChunkWatchEvent.Watch(this.chunk, player));
                 }
             }
         }

@@ -7,7 +7,8 @@ import org.spongepowered.api.event.cause.EventContext;
 import org.spongepowered.api.world.World;
 
 
-public class SignTranslateEvent extends CraftEvent{
+public class SignTranslateEvent extends CraftEvent {
+
     private final Vector3i location;
     private final World world;
 

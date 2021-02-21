@@ -2,11 +2,11 @@ package io.github.pulverizer.movecraft.sign;
 
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.config.Settings;
-import io.github.pulverizer.movecraft.utils.BlockSnapshotSignDataUtil;
-import io.github.pulverizer.movecraft.utils.MathUtils;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
-
+import io.github.pulverizer.movecraft.utils.BlockSnapshotSignDataUtil;
+import io.github.pulverizer.movecraft.utils.MathUtils;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockType;
@@ -34,6 +34,7 @@ import java.util.Optional;
  * @version 1.4 - 20 Apr 2020
  */
 public final class RemoteSign {
+
     private static final String HEADER = "Remote Sign";
 
     public static void onSignChange(ChangeSignEvent event, Player player) {
@@ -47,8 +48,9 @@ public final class RemoteSign {
     public static void onSignClick(InteractBlockEvent event, Player player, BlockSnapshot block) {
 
 
-        if (!block.getLocation().isPresent())
+        if (!block.getLocation().isPresent()) {
             return;
+        }
 
         if (!BlockSnapshotSignDataUtil.getTextLine(block, 1).get().equalsIgnoreCase(HEADER)) {
             return;
@@ -73,7 +75,7 @@ public final class RemoteSign {
             return;
         }
 
-        if (!foundCraft.getType().allowRemoteSigns()) {
+        if (!foundCraft.getType().getSetting(Defaults.AllowRemoteSigns.class).get().getValue()) {
             if (player != null) {
                 player.sendMessage(Text.of("ERROR: Remote Signs not allowed on this craft!"));
             }
@@ -96,7 +98,9 @@ public final class RemoteSign {
             return;
         }
 
-        if (!player.hasPermission("movecraft." + foundCraft.getType().getName() + ".useremote") && (foundCraft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.useremote"))) {
+        if (!player.hasPermission("movecraft." + foundCraft.getType().getSetting(Defaults.Name.class).get().getValue() + ".useremote") && (
+                foundCraft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player
+                        .hasPermission("movecraft.useremote"))) {
             player.sendMessage(Text.of("Insufficient Permissions"));
             return;
         }
@@ -152,16 +156,21 @@ public final class RemoteSign {
 
             InteractBlockEvent interact = null;
 
-            if(event instanceof InteractBlockEvent.Primary) {
-                interact = SpongeEventFactory.createInteractBlockEventPrimaryMainHand(event.getCause(), HandTypes.MAIN_HAND, newBlock.getLocation(), newBlock, event.getTargetSide());
+            if (event instanceof InteractBlockEvent.Primary) {
+                interact = SpongeEventFactory
+                        .createInteractBlockEventPrimaryMainHand(event.getCause(), HandTypes.MAIN_HAND, newBlock.getLocation(), newBlock,
+                                event.getTargetSide());
             }
 
-            if(event instanceof InteractBlockEvent.Secondary) {
-                interact = SpongeEventFactory.createInteractBlockEventSecondaryMainHand(event.getCause(), Tristate.FALSE, Tristate.FALSE, Tristate.FALSE, Tristate.FALSE, HandTypes.MAIN_HAND, newBlock.getLocation(), newBlock, event.getTargetSide());
+            if (event instanceof InteractBlockEvent.Secondary) {
+                interact = SpongeEventFactory
+                        .createInteractBlockEventSecondaryMainHand(event.getCause(), Tristate.FALSE, Tristate.FALSE, Tristate.FALSE, Tristate.FALSE,
+                                HandTypes.MAIN_HAND, newBlock.getLocation(), newBlock, event.getTargetSide());
             }
 
-            if (interact != null)
+            if (interact != null) {
                 Sponge.getEventManager().post(interact);
+            }
         }
 
         event.setCancelled(true);

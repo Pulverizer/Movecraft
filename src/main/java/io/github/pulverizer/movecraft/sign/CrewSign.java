@@ -1,5 +1,7 @@
 package io.github.pulverizer.movecraft.sign;
 
+import static org.spongepowered.api.event.Order.FIRST;
+
 import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.Movecraft;
@@ -10,8 +12,6 @@ import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.block.tileentity.Sign;
 import org.spongepowered.api.data.Transaction;
-import org.spongepowered.api.data.manipulator.immutable.tileentity.ImmutableSignData;
-import org.spongepowered.api.data.value.immutable.ImmutableListValue;
 import org.spongepowered.api.data.value.mutable.ListValue;
 import org.spongepowered.api.entity.Transform;
 import org.spongepowered.api.entity.living.player.Player;
@@ -27,9 +27,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
-
-import static org.spongepowered.api.event.Order.FIRST;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Permissions checked
@@ -113,8 +115,9 @@ public class CrewSign {
                 }
             }
 
-            if (availableID == -1 && availableID < lastCheckedID || lastCheckedID == -1)
+            if (availableID == -1 && availableID < lastCheckedID || lastCheckedID == -1) {
                 availableID = lastCheckedID + 1;
+            }
 
 
             if (availableID == -1) {
@@ -175,6 +178,119 @@ public class CrewSign {
         updateSignLocation(username, id, world.getUniqueId(), location);
     }
 
+    public static void onSignBreak(ChangeBlockEvent.Break event, Transaction<BlockSnapshot> transaction) {
+
+        BlockSnapshot blockSnapshot = transaction.getOriginal();
+
+        if (blockSnapshot.getState().getType() != BlockTypes.STANDING_SIGN && blockSnapshot.getState().getType() != BlockTypes.WALL_SIGN) {
+            return;
+        }
+
+        if (!blockSnapshot.getLocation().isPresent()) {
+            return;
+        }
+
+        if (!BlockSnapshotSignDataUtil.getTextLine(blockSnapshot, 1).get().equalsIgnoreCase(HEADER)) {
+            return;
+        }
+
+        String username = BlockSnapshotSignDataUtil.getTextLine(blockSnapshot, 2).get();
+        int id = Integer.parseInt(BlockSnapshotSignDataUtil.getTextLine(blockSnapshot, 3).get());
+
+        if (!removeFromDatabase(username, id)) {
+            transaction.setValid(false);
+        }
+    }
+
+    private static boolean removeFromDatabase(String username, int id) {
+
+        Connection sqlConnection = Movecraft.getInstance().connectToSQL();
+
+        if (sqlConnection == null) {
+            return false;
+        }
+
+        try {
+
+            PreparedStatement statement = sqlConnection.prepareStatement("DELETE FROM " + MAIN_TABLE + " WHERE Username = ? AND ID = ?");
+            statement.setString(1, username);
+            statement.setInt(2, id);
+
+            statement.execute();
+            statement.close();
+
+            sqlConnection.close();
+
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+
+            try {
+                sqlConnection.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+
+            return false;
+        }
+    }
+
+    private static void updateSignLocation(String username, int id, UUID world, Vector3i location) {
+
+        Connection sqlConnection = Movecraft.getInstance().connectToSQL();
+
+        try {
+
+            PreparedStatement statement =
+                    sqlConnection.prepareStatement("UPDATE " + MAIN_TABLE + " SET World = ?, X = ?, Y = ?, Z = ? WHERE Username = ? AND ID = ?");
+
+            //New Variables
+            statement.setString(1, world.toString());
+            statement.setInt(2, location.getX());
+            statement.setInt(3, location.getY());
+            statement.setInt(4, location.getZ());
+
+            //Primary Key
+            statement.setString(5, username);
+            statement.setInt(6, id);
+
+            statement.execute();
+            statement.close();
+
+            sqlConnection.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void initDatabase() {
+
+        Connection sqlConnection = Movecraft.getInstance().connectToSQL();
+
+        try {
+
+            PreparedStatement statement = sqlConnection.prepareStatement("CREATE TABLE IF NOT EXISTS " + MAIN_TABLE + " (" +
+                    "Username CHAR(16) NOT NULL, " +
+                    "ID INT(16) NOT NULL, " +
+                    "World CHAR(36) NOT NULL," +
+                    "X INT(12) NOT NULL," +
+                    "Y INT(12) NOT NULL," +
+                    "Z INT(12) NOT NULL," +
+                    "CONSTRAINT " + MAIN_TABLE + "_PKey PRIMARY KEY (Username, ID)" +
+                    ")");
+
+            statement.execute();
+            statement.close();
+
+            sqlConnection.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Listener(order = FIRST)
     public final void onPlayerRespawn(RespawnPlayerEvent event) {
 
@@ -220,8 +336,9 @@ public class CrewSign {
             e.printStackTrace();
         }
 
-        if (respawnOptions.isEmpty())
+        if (respawnOptions.isEmpty()) {
             return;
+        }
 
         World world = event.getToTransform().getExtent();
 
@@ -233,8 +350,9 @@ public class CrewSign {
 
         for (Vector3i location : locations) {
 
-            if (!world.getBlockType(location.sub(0, 1, 0)).equals(BlockTypes.BED))
+            if (!world.getBlockType(location.sub(0, 1, 0)).equals(BlockTypes.BED)) {
                 continue;
+            }
 
             if (respawnLocation == null) {
 
@@ -252,7 +370,8 @@ public class CrewSign {
         if (respawnLocation != null) {
 
 
-            Location<World> finalLocation = Sponge.getGame().getTeleportHelper().getSafeLocation(new Location<>(world, respawnLocation)).orElse(new Location<>(world, respawnLocation));
+            Location<World> finalLocation = Sponge.getGame().getTeleportHelper().getSafeLocation(new Location<>(world, respawnLocation))
+                    .orElse(new Location<>(world, respawnLocation));
 
             player.sendMessage(Text.of("Respawning at crew bed!"));
             Transform<World> respawnTransform = event.getToTransform();
@@ -267,118 +386,12 @@ public class CrewSign {
 
                 RespawnLocation respawnBed = respawnLocations.get(world.getUniqueId());
 
-                respawnLocations.put(world.getUniqueId(), RespawnLocation.builder().from(respawnBed).position(finalLocation.getPosition()).forceSpawn(false).build());
+                respawnLocations.put(world.getUniqueId(), RespawnLocation.builder().from(respawnBed).position(finalLocation.getPosition())
+                .forceSpawn(false).build());
 
                 player.offer(Keys.RESPAWN_LOCATIONS, respawnLocations);
             }
             */
-        }
-    }
-
-    public static void onSignBreak(ChangeBlockEvent.Break event, Transaction<BlockSnapshot> transaction) {
-
-        BlockSnapshot blockSnapshot = transaction.getOriginal();
-
-        if (blockSnapshot.getState().getType() != BlockTypes.STANDING_SIGN && blockSnapshot.getState().getType() != BlockTypes.WALL_SIGN)
-            return;
-
-        if (!blockSnapshot.getLocation().isPresent())
-            return;
-
-        if (!BlockSnapshotSignDataUtil.getTextLine(blockSnapshot, 1).get().equalsIgnoreCase(HEADER))
-            return;
-
-        String username = BlockSnapshotSignDataUtil.getTextLine(blockSnapshot, 2).get();
-        int id = Integer.parseInt(BlockSnapshotSignDataUtil.getTextLine(blockSnapshot, 3).get());
-
-        if (!removeFromDatabase(username, id))
-            transaction.setValid(false);
-    }
-
-    private static boolean removeFromDatabase(String username, int id) {
-
-        Connection sqlConnection = Movecraft.getInstance().connectToSQL();
-
-        if (sqlConnection == null)
-            return false;
-
-        try {
-
-            PreparedStatement statement = sqlConnection.prepareStatement("DELETE FROM " + MAIN_TABLE + " WHERE Username = ? AND ID = ?");
-            statement.setString(1, username);
-            statement.setInt(2, id);
-
-            statement.execute();
-            statement.close();
-
-            sqlConnection.close();
-
-            return true;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-
-            try {
-                sqlConnection.close();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-
-            return false;
-        }
-    }
-
-    private static void updateSignLocation(String username, int id, UUID world, Vector3i location) {
-
-        Connection sqlConnection = Movecraft.getInstance().connectToSQL();
-
-        try {
-
-            PreparedStatement statement = sqlConnection.prepareStatement("UPDATE " + MAIN_TABLE + " SET World = ?, X = ?, Y = ?, Z = ? WHERE Username = ? AND ID = ?");
-
-            //New Variables
-            statement.setString(1, world.toString());
-            statement.setInt(2, location.getX());
-            statement.setInt(3, location.getY());
-            statement.setInt(4, location.getZ());
-
-            //Primary Key
-            statement.setString(5, username);
-            statement.setInt(6, id);
-
-            statement.execute();
-            statement.close();
-
-            sqlConnection.close();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void initDatabase() {
-
-        Connection sqlConnection = Movecraft.getInstance().connectToSQL();
-
-        try {
-
-            PreparedStatement statement = sqlConnection.prepareStatement("CREATE TABLE IF NOT EXISTS " + MAIN_TABLE + " (" +
-                    "Username CHAR(16) NOT NULL, " +
-                    "ID INT(16) NOT NULL, " +
-                    "World CHAR(36) NOT NULL," +
-                    "X INT(12) NOT NULL," +
-                    "Y INT(12) NOT NULL," +
-                    "Z INT(12) NOT NULL," +
-                    "CONSTRAINT " + MAIN_TABLE + "_PKey PRIMARY KEY (Username, ID)" +
-                    ")");
-
-            statement.execute();
-            statement.close();
-
-            sqlConnection.close();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
     }
 }

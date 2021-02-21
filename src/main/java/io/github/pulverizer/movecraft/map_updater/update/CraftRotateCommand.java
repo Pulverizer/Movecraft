@@ -1,12 +1,17 @@
 package io.github.pulverizer.movecraft.map_updater.update;
 
 import com.flowpowered.math.vector.Vector3i;
-import io.github.pulverizer.movecraft.*;
+import io.github.pulverizer.movecraft.Movecraft;
 import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.enums.Rotation;
 import io.github.pulverizer.movecraft.event.SignTranslateEvent;
-import io.github.pulverizer.movecraft.utils.*;
+import io.github.pulverizer.movecraft.utils.CollectionUtils;
+import io.github.pulverizer.movecraft.utils.HashHitBox;
+import io.github.pulverizer.movecraft.utils.HitBox;
+import io.github.pulverizer.movecraft.utils.MutableHitBox;
+import io.github.pulverizer.movecraft.utils.SolidHitBox;
 import io.github.pulverizer.movecraft.world.ChunkDataManager;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
@@ -17,11 +22,15 @@ import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.world.BlockChangeFlags;
 import org.spongepowered.api.world.Location;
 
-import java.util.*;
-
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
 
 
 public class CraftRotateCommand extends UpdateCommand {
+
     private final Craft craft;
     private final Rotation rotation;
     private final Vector3i originLocation;
@@ -45,8 +54,8 @@ public class CraftRotateCommand extends UpdateCommand {
             return;
         }
 
-        final Set<BlockType> passthroughBlocks = new HashSet<>(craft.getType().getPassthroughBlocks());
-        if(craft.isSinking()){
+        final Set<BlockType> passthroughBlocks = new HashSet<>(craft.getType().getSetting(Defaults.PassthroughBlocks.class).get().getValue());
+        if (craft.isSinking()) {
             passthroughBlocks.add(BlockTypes.WATER);
             passthroughBlocks.add(BlockTypes.FLOWING_WATER);
             passthroughBlocks.add(BlockTypes.LEAVES);
@@ -93,7 +102,7 @@ public class CraftRotateCommand extends UpdateCommand {
                 validExterior.addAll(CollectionUtils.filter(hitBox, newHitBox).asSet());
             }
             //Check to see which locations in the from set are actually outside of the craft
-            for (Vector3i location : validExterior ) {
+            for (Vector3i location : validExterior) {
                 if (newHitBox.contains(location) || exterior.contains(location)) {
                     continue;
                 }
@@ -152,11 +161,13 @@ public class CraftRotateCommand extends UpdateCommand {
                 final BlockSnapshot material = craft.getWorld().createSnapshot(location);
                 if (passthroughBlocks.contains(material.getState().getType())) {
                     craft.getPhasedBlocks().add(material);
-                    craft.getWorld().restoreSnapshot(location, BlockTypes.AIR.getDefaultState().snapshotFor(new Location<>(craft.getWorld(), location)), true, BlockChangeFlags.NONE);
+                    craft.getWorld()
+                            .restoreSnapshot(location, BlockTypes.AIR.getDefaultState().snapshotFor(new Location<>(craft.getWorld(), location)), true,
+                                    BlockChangeFlags.NONE);
 
                 }
             }
-        }else{
+        } else {
             //add the craft
             rotateCraft();
             craft.setHitBox(newHitBox);
@@ -217,7 +228,10 @@ public class CraftRotateCommand extends UpdateCommand {
         craft.updateLastMoveTick();
         craft.setProcessing(false);
 
-        if (Settings.Debug) logger.info("Total time: " + time + " ms. Moving with cooldown of " + craft.getTickCooldown() + ". Speed of: " + String.format("%.2f", craft.getActualSpeed()));
+        if (Settings.Debug) {
+            logger.info("Total time: " + time + " ms. Moving with cooldown of " + craft.getTickCooldown() + ". Speed of: " + String
+                    .format("%.2f", craft.getActualSpeed()));
+        }
     }
 
     private void rotateCraft() {

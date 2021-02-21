@@ -23,8 +23,9 @@ public class WorldUtils {
     public static void moveEntity(Entity entity, Vector3d newLocation, float rotation) {
         boolean entityMoved = entity.setLocationAndRotation(new Location<>(entity.getWorld(), newLocation), entity.getRotation().add(0, rotation, 0));
 
-        if (Settings.Debug && !entityMoved)
+        if (Settings.Debug && !entityMoved) {
             Movecraft.getInstance().getLogger().info("Failed to move Entity of type: " + entity.getType().getName());
+        }
     }
 
     public static BlockPos locationToBlockPos(Vector3i loc) {

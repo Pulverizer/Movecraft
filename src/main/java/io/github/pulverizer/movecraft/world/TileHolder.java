@@ -5,6 +5,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.NextTickListEntry;
 
 public class TileHolder {
+
     private final TileEntity tile;
     private final NextTickListEntry nextTick;
     private final Vector3i tilePosition;

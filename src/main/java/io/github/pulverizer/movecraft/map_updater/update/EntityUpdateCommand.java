@@ -7,9 +7,11 @@ import org.spongepowered.api.entity.Entity;
 import java.util.Objects;
 
 /**
- * Class that stores the data about a single blocks changes to the map in an unspecified world. The world is retrieved contextually from the submitting craft.
+ * Class that stores the data about a single blocks changes to the map in an unspecified world. The world is retrieved contextually from the
+ * submitting craft.
  */
 public class EntityUpdateCommand extends UpdateCommand {
+
     private final Entity entity;
     private final Vector3d newLocation;
     private final float yaw;
@@ -36,7 +38,7 @@ public class EntityUpdateCommand extends UpdateCommand {
 
     @Override
     public boolean equals(Object obj) {
-        if(!(obj instanceof EntityUpdateCommand)){
+        if (!(obj instanceof EntityUpdateCommand)) {
             return false;
         }
         EntityUpdateCommand other = (EntityUpdateCommand) obj;

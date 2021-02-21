@@ -30,12 +30,14 @@ public final class SpeedSign {
         }
     }
 
-    public static void onCraftDetect(CraftDetectEvent event, World world, HashHitBox hitBox){
+    public static void onCraftDetect(CraftDetectEvent event, World world, HashHitBox hitBox) {
 
-        for(Vector3i location: hitBox){
+        for (Vector3i location : hitBox) {
 
-            if(world.getBlockType(location) != BlockTypes.WALL_SIGN && world.getBlockType(location) != BlockTypes.STANDING_SIGN || !world.getTileEntity(location).isPresent())
+            if (world.getBlockType(location) != BlockTypes.WALL_SIGN && world.getBlockType(location) != BlockTypes.STANDING_SIGN || !world
+                    .getTileEntity(location).isPresent()) {
                 continue;
+            }
 
             Sign sign = (Sign) world.getTileEntity(location).get();
             ListValue<Text> lines = sign.lines();

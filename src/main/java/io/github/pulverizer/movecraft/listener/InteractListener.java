@@ -1,12 +1,12 @@
 package io.github.pulverizer.movecraft.listener;
 
 import com.flowpowered.math.vector.Vector3i;
+import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
+import io.github.pulverizer.movecraft.craft.Craft;
+import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.enums.DirectControlMode;
 import io.github.pulverizer.movecraft.utils.MathUtils;
-import io.github.pulverizer.movecraft.craft.Craft;
-import io.github.pulverizer.movecraft.config.Settings;
-import io.github.pulverizer.movecraft.craft.CraftManager;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.block.tileentity.carrier.Dispenser;
@@ -43,6 +43,7 @@ public final class InteractListener {
             block.getLocation().get().restoreSnapshot(block, true, BlockChangeFlags.ALL);
         }
     }
+
     @Listener
     public final void onPlayerInteractSecondary(InteractBlockEvent.Secondary.MainHand event, @Root Player player) {
         BlockSnapshot block = event.getTargetBlock();
@@ -78,7 +79,8 @@ public final class InteractListener {
                 Dispenser dispenser = (Dispenser) block.getLocation().get().getTileEntity().get();
                 ItemStack giveStack = itemInHand.get().copy();
                 dispenser.getInventory().offer(giveStack);
-                player.getInventory().query(QueryOperationTypes.ITEM_TYPE.of(itemInHand.get().getType())).transform(InventoryTransformations.REVERSE).poll(itemInHand.get().getQuantity() - giveStack.getQuantity());
+                player.getInventory().query(QueryOperationTypes.ITEM_TYPE.of(itemInHand.get().getType())).transform(InventoryTransformations.REVERSE)
+                        .poll(itemInHand.get().getQuantity() - giveStack.getQuantity());
                 event.setCancelled(true);
             }
         }
@@ -88,7 +90,8 @@ public final class InteractListener {
     @Include({InteractItemEvent.Primary.class, InteractItemEvent.Secondary.MainHand.class})
     public void onPlayerInteractStick(InteractItemEvent event, @Root Player player) {
 
-        if (!player.getItemInHand(HandTypes.MAIN_HAND).isPresent() || !player.getItemInHand(HandTypes.MAIN_HAND).get().getType().equals(Settings.PilotTool)) {
+        if (!player.getItemInHand(HandTypes.MAIN_HAND).isPresent() || !player.getItemInHand(HandTypes.MAIN_HAND).get().getType()
+                .equals(Settings.PilotTool)) {
             return;
         }
 
@@ -106,15 +109,17 @@ public final class InteractListener {
         if (event instanceof InteractItemEvent.Secondary) {
             event.setCancelled(true);
 
-            if (!craft.hasCooldownExpired())
+            if (!craft.hasCooldownExpired()) {
                 return;
+            }
 
 
-            if (!MathUtils.locationNearHitBox(craft.getHitBox(),player.getPosition(),2))
+            if (!MathUtils.locationNearHitBox(craft.getHitBox(), player.getPosition(), 2)) {
                 return;
+            }
 
 
-            if (!player.hasPermission("movecraft." + craft.getType().getName() + ".movement.move")) {
+            if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".movement.move")) {
                 player.sendMessage(Text.of("Insufficient Permissions"));
                 return;
             }
@@ -122,8 +127,9 @@ public final class InteractListener {
             if (craft.isUnderDirectControl()) {
                 // right click moves up or down if using direct control
                 int dy = 1;
-                if (player.get(Keys.IS_SNEAKING).get())
+                if (player.get(Keys.IS_SNEAKING).get()) {
                     dy = -1;
+                }
 
                 craft.translate(new Vector3i(0, dy, 0));
 
@@ -163,7 +169,8 @@ public final class InteractListener {
                 return;
             }
 
-            if (!player.hasPermission("movecraft." + craft.getType().getName() + ".movement.move") || !craft.getType().getCanDirectControl()) {
+            if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".movement.move") || !craft
+                    .getType().getSetting(Defaults.CanDirectControl.class).get().getValue()) {
                 player.sendMessage(Text.of("Insufficient Permissions"));
                 return;
             }

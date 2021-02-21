@@ -7,6 +7,7 @@ import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.Movecraft;
 import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import org.spongepowered.api.Sponge;
@@ -49,9 +50,8 @@ public class TNTListener {
     private final HashMap<PrimedTNT, Integer> tracerTNT = new HashMap<>();
     private final HashSet<PrimedTNT> shrapnelControlList = new HashSet<>();
     private final HashSet<PrimedTNT> tntControlList = new HashSet<>();
-    private int tntControlTimer = 0;
-
     private final HashMap<Explosion, HashSet<Explosion>> ammoDetonation = new HashMap<>();
+    private int tntControlTimer = 0;
 
     public TNTListener() {
         Task.builder()
@@ -172,7 +172,7 @@ public class TNTListener {
 
             //TODO - make it use the spawning Dispenser location to check against craft hitbox
 
-            if (craft != null && craft.getType().allowCannonDirectors()) {
+            if (craft != null && craft.getType().getSetting(Defaults.CanHaveCannonDirectors.class).get().getValue()) {
                 Player player = craft.getCannonDirectorFor(primedTNT);
 
                 if (player != null && player.getItemInHand(HandTypes.MAIN_HAND).get().getType() == Settings.PilotTool) {

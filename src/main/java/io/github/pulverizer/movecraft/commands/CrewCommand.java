@@ -1,33 +1,19 @@
 package io.github.pulverizer.movecraft.commands;
 
 import io.github.pulverizer.movecraft.Movecraft;
-import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.craft.crew.CrewManager;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
-import org.spongepowered.api.command.args.CommandElement;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.Text;
 
-import java.util.ArrayList;
-
 public class CrewCommand implements CommandExecutor {
-
-    @Override
-    public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
-
-        if (src instanceof Player) {
-            CrewManager.getInstance().getPrintedCrewList((Player) src).forEach(line -> src.sendMessage(Text.of(line)));
-        }
-
-        return CommandResult.success();
-    }
 
     public static void register() {
         // TODO - these might be buggy as it does not enforce exact matches!
@@ -66,7 +52,18 @@ public class CrewCommand implements CommandExecutor {
         Sponge.getCommandManager().register(Movecraft.getInstance(), crewCommand, "crew");
     }
 
+    @Override
+    public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
+
+        if (src instanceof Player) {
+            CrewManager.getInstance().getPrintedCrewList((Player) src).forEach(line -> src.sendMessage(Text.of(line)));
+        }
+
+        return CommandResult.success();
+    }
+
     public static class Join extends CrewCommand {
+
         @Override
         public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
             if (src instanceof Player) {
@@ -79,6 +76,7 @@ public class CrewCommand implements CommandExecutor {
     }
 
     public static class Invite extends CrewCommand {
+
         @Override
         public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
             if (src instanceof Player) {
@@ -91,6 +89,7 @@ public class CrewCommand implements CommandExecutor {
     }
 
     public static class Kick extends CrewCommand {
+
         @Override
         public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
             if (src instanceof Player) {
@@ -103,6 +102,7 @@ public class CrewCommand implements CommandExecutor {
     }
 
     public static class Leave extends CrewCommand {
+
         @Override
         public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
             if (src instanceof Player) {

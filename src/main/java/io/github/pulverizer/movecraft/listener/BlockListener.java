@@ -1,7 +1,11 @@
 package io.github.pulverizer.movecraft.listener;
 
+import static org.spongepowered.api.event.Order.FIRST;
+import static org.spongepowered.api.event.Order.LAST;
+
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.sign.CommanderSign;
@@ -20,9 +24,6 @@ import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
 import java.util.HashSet;
-
-import static org.spongepowered.api.event.Order.FIRST;
-import static org.spongepowered.api.event.Order.LAST;
 
 public class BlockListener {
 
@@ -68,14 +69,17 @@ public class BlockListener {
                 HashSet<Craft> repairingCrafts = new HashSet<>();
 
                 for (Vector3i blockPosition : CollectionUtils.neighbors(location.getBlockPosition())) {
-                    HashSet<Craft> craftsAtLocation = CraftManager.getInstance().getCraftsFromLocation(new Location<>(location.getExtent(), blockPosition));
+                    HashSet<Craft> craftsAtLocation =
+                            CraftManager.getInstance().getCraftsFromLocation(new Location<>(location.getExtent(), blockPosition));
 
                     if (!craftsAtLocation.isEmpty()) {
                         foundCrafts = true;
 
                         for (Craft craft : craftsAtLocation) {
 
-                            if (craft.isSinking() || !craft.isRepairman(player.getUniqueId()) || !craft.getType().getAllowedBlocks().contains(transaction.getFinal().getState().getType())) {
+                            if (craft.isSinking() || !craft.isRepairman(player.getUniqueId())
+                                    || !craft.getType().getSetting(Defaults.AllowedBlocks.class).get().getValue().contains(transaction.getFinal().getState().getType())
+                                    || craft.getSize() >= craft.getType().getSetting(Defaults.MaxSize.class).get().getValue()) {
                                 continue;
                             }
 
@@ -101,7 +105,7 @@ public class BlockListener {
                     }
 
                     if (!isProcessing) {
-                        repairingCrafts.removeIf(craft -> !craft.getType().getAllowedBlocks().contains(transaction.getFinal().getState().getType()));
+                        repairingCrafts.removeIf(craft -> !craft.getType().getSetting(Defaults.AllowedBlocks.class).get().getValue().contains(transaction.getFinal().getState().getType()));
                         repairingCrafts.forEach(craft -> craft.getHitBox().add(location.getBlockPosition()));
                     } else {
                         player.sendMessage(Text.of("Craft is Busy"));
@@ -116,13 +120,16 @@ public class BlockListener {
     @Listener(order = FIRST)
     public void onBlockFromTo(ChangeBlockEvent.Modify event) {
 
-        if (!event.getContext().containsKey(EventContextKeys.LIQUID_FLOW))
+        if (!event.getContext().containsKey(EventContextKeys.LIQUID_FLOW)) {
             return;
+        }
 
         for (Transaction<BlockSnapshot> transaction : event.getTransactions()) {
 
-            if (!transaction.getOriginal().getLocation().isPresent() || transaction.getOriginal().getProperty(MatterProperty.class).get().getValue() != MatterProperty.Matter.LIQUID)
+            if (!transaction.getOriginal().getLocation().isPresent()
+                    || transaction.getOriginal().getProperty(MatterProperty.class).get().getValue() != MatterProperty.Matter.LIQUID) {
                 continue;
+            }
 
             for (Craft craft : CraftManager.getInstance().getCraftsInWorld(transaction.getOriginal().getLocation().get().getExtent())) {
                 if (craft.isProcessing() && craft.getHitBox().contains(transaction.getOriginal().getLocation().get().getBlockPosition())) {

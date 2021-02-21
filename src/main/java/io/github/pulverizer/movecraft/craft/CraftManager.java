@@ -4,6 +4,7 @@ import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.Movecraft;
 import io.github.pulverizer.movecraft.config.ConfigManager;
 import io.github.pulverizer.movecraft.config.CraftType;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.utils.HashHitBox;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.block.BlockType;
@@ -25,15 +26,10 @@ public class CraftManager implements Iterable<Craft> {
 
     private static CraftManager ourInstance;
     private final Set<Craft> craftList = ConcurrentHashMap.newKeySet();
-    private HashSet<CraftType> craftTypes;
     private final HashSet<BlockType> transparent = new HashSet<>();
-
     @Deprecated
     private final ConcurrentMap<Craft, Task> releaseEvents = new ConcurrentHashMap<>();
-
-    private static void initialize() {
-        ourInstance = new CraftManager();
-    }
+    private HashSet<CraftType> craftTypes;
 
     private CraftManager() {
         transparent.add(BlockTypes.AIR);
@@ -69,6 +65,10 @@ public class CraftManager implements Iterable<Craft> {
         this.craftTypes = ConfigManager.loadCraftTypes();
     }
 
+    private static void initialize() {
+        ourInstance = new CraftManager();
+    }
+
     public static CraftManager getInstance() {
         if (ourInstance == null) {
             initialize();
@@ -102,10 +102,12 @@ public class CraftManager implements Iterable<Craft> {
             if (player != null) {
                 Movecraft.getInstance().getLogger().info(String
                         .format(player.getName() + " has released a craft of type %s with size %d at coordinates : %d x , %d z",
-                                c.getType().getName(), c.getHitBox().size(), c.getHitBox().getMinX(), c.getHitBox().getMinZ()));
+                                c.getType().getSetting(Defaults.Name.class).get().getValue(), c.getHitBox().size(), c.getHitBox().getMinX(),
+                                c.getHitBox().getMinZ()));
             } else {
                 Movecraft.getInstance().getLogger().info(String
-                        .format("NULL Player has released a craft of type %s with size %d at coordinates : %d x , %d z", c.getType().getName(),
+                        .format("NULL Player has released a craft of type %s with size %d at coordinates : %d x , %d z", c.getType().getSetting(
+                                Defaults.Name.class).get().getValue(),
                                 c.getHitBox().size(), c.getHitBox().getMinX(), c.getHitBox().getMinZ()));
             }
         } else {
@@ -173,7 +175,7 @@ public class CraftManager implements Iterable<Craft> {
 
     public CraftType getCraftTypeFromString(String string) {
         for (CraftType craftType : craftTypes) {
-            if (string.equalsIgnoreCase(craftType.getName())) {
+            if (string.equalsIgnoreCase(craftType.getSetting(Defaults.Name.class).get().getValue())) {
                 return craftType;
             }
         }

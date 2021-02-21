@@ -2,13 +2,13 @@ package io.github.pulverizer.movecraft.commands;
 
 import io.github.pulverizer.movecraft.Movecraft;
 import io.github.pulverizer.movecraft.config.CraftType;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
-import org.spongepowered.api.command.args.CommandElement;
 import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.command.spec.CommandSpec;
@@ -17,14 +17,6 @@ import org.spongepowered.api.text.Text;
 import java.util.ArrayList;
 
 public class CraftTypesCommand implements CommandExecutor {
-
-    @Override
-    public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
-        // send Output
-        src.sendMessage(Text.of("/crafttypes [list] || [info <crafttype>]"));
-
-        return CommandResult.success();
-    }
 
     public static void register() {
         CommandSpec listCommand = CommandSpec.builder()
@@ -49,6 +41,14 @@ public class CraftTypesCommand implements CommandExecutor {
         Sponge.getCommandManager().register(Movecraft.getInstance(), commandSpec, "crafttypes");
     }
 
+    @Override
+    public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
+        // send Output
+        src.sendMessage(Text.of("/crafttypes [list] || [info <crafttype>]"));
+
+        return CommandResult.success();
+    }
+
     public static class List extends CraftTypesCommand {
 
         // TODO - Change to show only craft types the player has permissions for?
@@ -56,7 +56,8 @@ public class CraftTypesCommand implements CommandExecutor {
         public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
             ArrayList<Text> messages = new ArrayList<>();
 
-            CraftManager.getInstance().getCraftTypes().forEach(craftType -> messages.add(Text.of(craftType.getName())));
+            CraftManager.getInstance().getCraftTypes()
+                    .forEach(craftType -> messages.add(Text.of(craftType.getSetting(Defaults.Name.class).get().getValue())));
 
             // send Output
             src.sendMessage(Text.of("Craft Types:"));
@@ -74,9 +75,9 @@ public class CraftTypesCommand implements CommandExecutor {
 
             CraftType craftType = CraftManager.getInstance().getCraftTypeFromString((String) args.getOne("crafttype").get());
 
-            messages.add(Text.of("Name: " + craftType.getName()));
+            messages.add(Text.of("Name: " + craftType.getSetting(Defaults.Name.class).get().getValue()));
             messages.add(Text.of("Allowed Blocks:"));
-            craftType.getAllowedBlocks().forEach(blockType -> messages.add(Text.of("    " + blockType.getTranslation().get(src.getLocale()))));
+            craftType.getSetting(Defaults.AllowedBlocks.class).get().getValue().forEach(blockType -> messages.add(Text.of("    " + blockType.getTranslation().get(src.getLocale()))));
 
             // send Output
             src.sendMessages(messages);

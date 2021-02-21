@@ -5,19 +5,25 @@ import io.github.pulverizer.movecraft.config.Settings;
 import io.github.pulverizer.movecraft.utils.BlockSnapshotSignDataUtil;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockTypes;
-import org.spongepowered.api.block.tileentity.Sign;
 import org.spongepowered.api.data.Transaction;
-import org.spongepowered.api.data.manipulator.immutable.tileentity.ImmutableSignData;
-import org.spongepowered.api.data.value.immutable.ImmutableListValue;
 import org.spongepowered.api.data.value.mutable.ListValue;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.event.block.tileentity.ChangeSignEvent;
 import org.spongepowered.api.text.Text;
 
-import java.sql.*;
+import java.sql.Connection;
 import java.sql.Date;
-import java.util.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Time;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Permissions Checked
@@ -82,8 +88,9 @@ public final class CommanderSign {
                 }
             }
 
-            if (availableID == -1 && availableID < lastCheckedID || lastCheckedID == -1)
+            if (availableID == -1 && availableID < lastCheckedID || lastCheckedID == -1) {
                 availableID = lastCheckedID + 1;
+            }
 
 
             if (availableID == -1) {
@@ -134,25 +141,29 @@ public final class CommanderSign {
 
         BlockSnapshot blockSnapshot = transaction.getOriginal();
 
-        if (blockSnapshot.getState().getType() != BlockTypes.STANDING_SIGN && blockSnapshot.getState().getType() != BlockTypes.WALL_SIGN)
+        if (blockSnapshot.getState().getType() != BlockTypes.STANDING_SIGN && blockSnapshot.getState().getType() != BlockTypes.WALL_SIGN) {
             return;
+        }
 
-        if (!BlockSnapshotSignDataUtil.getTextLine(blockSnapshot, 1).get().equalsIgnoreCase(HEADER))
+        if (!BlockSnapshotSignDataUtil.getTextLine(blockSnapshot, 1).get().equalsIgnoreCase(HEADER)) {
             return;
+        }
 
         String username = BlockSnapshotSignDataUtil.getTextLine(blockSnapshot, 2).get();
         int id = Integer.parseInt(BlockSnapshotSignDataUtil.getTextLine(blockSnapshot, 3).get());
 
-        if (!removeFromDatabase(username, id))
+        if (!removeFromDatabase(username, id)) {
             transaction.setValid(false);
+        }
     }
 
     private static boolean removeFromDatabase(String username, int id) {
 
         Connection sqlConnection = Movecraft.getInstance().connectToSQL();
 
-        if (sqlConnection == null)
+        if (sqlConnection == null) {
             return false;
+        }
 
         try {
 
@@ -191,12 +202,14 @@ public final class CommanderSign {
 
         Connection sqlConnection = Movecraft.getInstance().connectToSQL();
 
-        if (sqlConnection == null)
+        if (sqlConnection == null) {
             return null;
+        }
 
         try {
 
-            PreparedStatement statement = sqlConnection.prepareStatement("SELECT DateCreated, TimeCreated FROM " + MAIN_TABLE + " WHERE Username = ? AND ID = ?");
+            PreparedStatement statement =
+                    sqlConnection.prepareStatement("SELECT DateCreated, TimeCreated FROM " + MAIN_TABLE + " WHERE Username = ? AND ID = ?");
 
             statement.setString(1, username);
             statement.setInt(2, id);
@@ -205,8 +218,9 @@ public final class CommanderSign {
 
             HashMap<Date, Time> map = new HashMap<>();
 
-            if (results.next())
+            if (results.next()) {
                 map.put(results.getDate("DateCreated"), results.getTime("TimeCreated"));
+            }
 
 
             statement.close();
@@ -223,13 +237,15 @@ public final class CommanderSign {
 
         Connection sqlConnection = Movecraft.getInstance().connectToSQL();
 
-        if (sqlConnection == null)
+        if (sqlConnection == null) {
             return null;
+        }
 
 
         try {
 
-            PreparedStatement statement = sqlConnection.prepareStatement("SELECT UUID, isOwner FROM " + MEMBER_TABLE + " WHERE Username = ? AND ID = ?");
+            PreparedStatement statement =
+                    sqlConnection.prepareStatement("SELECT UUID, isOwner FROM " + MEMBER_TABLE + " WHERE Username = ? AND ID = ?");
 
             statement.setString(1, username);
             statement.setInt(2, id);
@@ -238,8 +254,9 @@ public final class CommanderSign {
 
             ResultSet results = statement.executeQuery();
 
-            while (results.next())
+            while (results.next()) {
                 members.put(UUID.fromString(results.getString("UUID")), results.getBoolean("isOwner"));
+            }
 
             statement.close();
             sqlConnection.close();

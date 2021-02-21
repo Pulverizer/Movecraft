@@ -8,7 +8,8 @@ import org.spongepowered.api.event.cause.Cause;
  * @see Craft
  */
 @SuppressWarnings("unused")
-public class CraftReleaseEvent extends CraftEvent{
+public class CraftReleaseEvent extends CraftEvent {
+
     private final Reason reason;
 
     public CraftReleaseEvent(Craft craft, Reason reason) {
@@ -25,7 +26,7 @@ public class CraftReleaseEvent extends CraftEvent{
         return null;
     }
 
-    public enum Reason{
-        DISCONNECT,SUB_CRAFT,PLAYER,FORCE
+    public enum Reason {
+        DISCONNECT, SUB_CRAFT, PLAYER, FORCE
     }
 }

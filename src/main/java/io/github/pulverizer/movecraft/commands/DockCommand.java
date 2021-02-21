@@ -19,6 +19,16 @@ import org.spongepowered.api.world.World;
 
 public class DockCommand implements CommandExecutor {
 
+    public static void register() {
+        CommandSpec dockCommand = CommandSpec.builder()
+                .description(Text.of("Merge to the craft you are landed on"))
+                .permission("movecraft.command.dock")
+                .executor(new DockCommand())
+                .build();
+
+        Sponge.getCommandManager().register(Movecraft.getInstance(), dockCommand, "dock");
+    }
+
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 
@@ -30,7 +40,7 @@ public class DockCommand implements CommandExecutor {
             if (craft != null && craft.getCommander().equals(player.getUniqueId())) {
 
                 Vector3i midpoint = craft.getHitBox().getMidPoint();
-                midpoint = new Vector3i(midpoint.getX(), craft.getHitBox().getMinY() -1, midpoint.getZ());
+                midpoint = new Vector3i(midpoint.getX(), craft.getHitBox().getMinY() - 1, midpoint.getZ());
 
                 Location<World> location = new Location<>(craft.getWorld(), midpoint);
 
@@ -56,15 +66,5 @@ public class DockCommand implements CommandExecutor {
         }
 
         return CommandResult.success();
-    }
-
-    public static void register() {
-        CommandSpec dockCommand = CommandSpec.builder()
-                .description(Text.of("Merge to the craft you are landed on"))
-                .permission("movecraft.command.dock")
-                .executor(new DockCommand())
-                .build();
-
-        Sponge.getCommandManager().register(Movecraft.getInstance(), dockCommand, "dock");
     }
 }

@@ -10,6 +10,7 @@ import org.spongepowered.api.event.impl.AbstractEvent;
  */
 
 public abstract class CraftEvent extends AbstractEvent implements Cancellable {
+
     protected final Craft craft;
     protected final boolean isAsync;
     private boolean isCancelled = false;
@@ -19,16 +20,16 @@ public abstract class CraftEvent extends AbstractEvent implements Cancellable {
         this.craft = craft;
     }
 
-    public CraftEvent(Craft craft, boolean isAsync){
+    public CraftEvent(Craft craft, boolean isAsync) {
         this.isAsync = isAsync;
         this.craft = craft;
     }
 
-    public final Craft getCraft(){
+    public final Craft getCraft() {
         return craft;
     }
 
-    public final boolean isAsync(){
+    public final boolean isAsync() {
         return isAsync;
     }
 

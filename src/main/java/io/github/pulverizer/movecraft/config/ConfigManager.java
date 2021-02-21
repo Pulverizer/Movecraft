@@ -1,6 +1,8 @@
 package io.github.pulverizer.movecraft.config;
 
 import io.github.pulverizer.movecraft.Movecraft;
+import io.github.pulverizer.movecraft.config.craft_settings.CraftSetting;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.ConfigurationOptions;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
@@ -117,12 +119,14 @@ public abstract class ConfigManager {
             return craftTypes;
         }
 
+        registerDefaultCraftSettings();
+
         for (File file : files) {
             if (file.isFile() && file.getName().endsWith(".craft")) {
                 Movecraft.getInstance().getLogger().info("Loading craft config: " + file.getName());
 
                 try {
-                    CraftType type = new CraftType(file);
+                    CraftType type = new CraftType(file.toPath());
                     craftTypes.add(type);
 
                 } catch (Exception e) {
@@ -134,5 +138,11 @@ public abstract class ConfigManager {
 
         Movecraft.getInstance().getLogger().info("Loaded " + craftTypes.size() + " craft configs.");
         return craftTypes;
+    }
+
+    private static void registerDefaultCraftSettings() {
+        for (Class<?> setting : Defaults.class.getDeclaredClasses()) {
+            CraftType.registerSetting((Class<? extends CraftSetting>) setting);
+        }
     }
 }

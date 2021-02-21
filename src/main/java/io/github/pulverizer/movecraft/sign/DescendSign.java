@@ -2,6 +2,7 @@ package io.github.pulverizer.movecraft.sign;
 
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.event.CraftDetectEvent;
@@ -34,12 +35,14 @@ public final class DescendSign {
         }
     }
 
-    public static void onCraftDetect(CraftDetectEvent event, World world, HashHitBox hitBox){
+    public static void onCraftDetect(CraftDetectEvent event, World world, HashHitBox hitBox) {
 
-        for(Vector3i location : hitBox){
+        for (Vector3i location : hitBox) {
 
-            if(world.getBlockType(location) != BlockTypes.WALL_SIGN && world.getBlockType(location) != BlockTypes.STANDING_SIGN || !world.getTileEntity(location).isPresent())
+            if (world.getBlockType(location) != BlockTypes.WALL_SIGN && world.getBlockType(location) != BlockTypes.STANDING_SIGN || !world
+                    .getTileEntity(location).isPresent()) {
                 continue;
+            }
 
             Sign sign = (Sign) world.getTileEntity(location).get();
             ListValue<Text> lines = sign.lines();
@@ -53,8 +56,9 @@ public final class DescendSign {
 
     public static void onSignClick(InteractBlockEvent.Secondary.MainHand event, Player player, BlockSnapshot block) {
 
-        if (!block.getLocation().isPresent() || !block.getLocation().get().getTileEntity().isPresent())
+        if (!block.getLocation().isPresent() || !block.getLocation().get().getTileEntity().isPresent()) {
             return;
+        }
 
         Sign sign = (Sign) block.getLocation().get().getTileEntity().get();
         ListValue<Text> lines = sign.lines();
@@ -67,11 +71,13 @@ public final class DescendSign {
 
         if (lines.get(0).toPlain().equalsIgnoreCase("Descend: OFF")) {
 
-            if (!craft.getType().getCanCruise() || player.getUniqueId() != craft.getPilot()) {
+            if (!craft.getType().getSetting(Defaults.CanCruise.class).get().getValue() || player.getUniqueId() != craft.getPilot()) {
                 return;
             }
 
-            if (!player.hasPermission("movecraft." + craft.getType().getName() + ".movement.descend") && (craft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.movement.descend"))) {
+            if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".movement.descend") && (
+                    craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player
+                            .hasPermission("movecraft.movement.descend"))) {
                 player.sendMessage(Text.of("Insufficient Permissions"));
                 return;
             }
@@ -86,7 +92,7 @@ public final class DescendSign {
         }
 
         if (lines.get(0).toPlain().equalsIgnoreCase("Descend: ON")) {
-            if (craft.getType().getCanCruise() && player.getUniqueId() == craft.getPilot()) {
+            if (craft.getType().getSetting(Defaults.CanCruise.class).get().getValue() && player.getUniqueId() == craft.getPilot()) {
                 lines.set(0, Text.of("Descend: OFF"));
                 sign.offer(lines);
                 craft.setCruising(Direction.NONE, craft.getHorizontalCruiseDirection());

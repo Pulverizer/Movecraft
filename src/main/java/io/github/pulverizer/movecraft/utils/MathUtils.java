@@ -2,8 +2,8 @@ package io.github.pulverizer.movecraft.utils;
 
 import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
-import io.github.pulverizer.movecraft.enums.Rotation;
 import io.github.pulverizer.movecraft.craft.Craft;
+import io.github.pulverizer.movecraft.enums.Rotation;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -17,7 +17,7 @@ public class MathUtils {
      */
 
     public static boolean locationInHitbox(final HashHitBox hitBox, final Location<World> location) {
-        return hitBox.inBounds(location.getX(),location.getY(),location.getZ());
+        return hitBox.inBounds(location.getX(), location.getY(), location.getZ());
     }
 
     /**

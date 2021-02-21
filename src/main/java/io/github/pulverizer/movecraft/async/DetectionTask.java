@@ -2,6 +2,7 @@ package io.github.pulverizer.movecraft.async;
 
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.Movecraft;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.event.CraftDetectEvent;
@@ -20,7 +21,13 @@ import org.spongepowered.api.world.World;
 
 import java.sql.Date;
 import java.sql.Time;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Stack;
+import java.util.UUID;
 
 /**
  * Permissions Checked
@@ -30,20 +37,19 @@ import java.util.*;
  * @version 1.2 - 25 Apr 2020
  */
 public class DetectionTask extends AsyncTask {
+
     private final World world;
     private final Vector3i startLocation;
     private final Stack<Vector3i> blockStack = new Stack<>();
     private final HashHitBox detectedHitBox = new HashHitBox();
-    private HashHitBox hitBox;
     private final HashSet<Vector3i> visited = new HashSet<>();
-    private boolean waterContact = false;
     private final HashMap<List<BlockType>, Integer> blockTypeCount = new HashMap<>();
-
+    protected Player player;
+    private HashHitBox hitBox;
+    private boolean waterContact = false;
     private Map.Entry<Date, Time> commanderSignTimeStamp;
     private String commanderSignUsername;
     private int commanderSignId;
-
-    protected Player player;
 
     public DetectionTask(Craft craft, Location<World> startLocation, Player player) {
         super(craft, "Detection");
@@ -58,19 +64,25 @@ public class DetectionTask extends AsyncTask {
         detectBlocks();
 
         // Return early if failed
-        if (failed()) return;
+        if (failed()) {
+            return;
+        }
 
         // Run final checks
         confirmRequirements();
 
         // Return early if failed
-        if (failed()) return;
+        if (failed()) {
+            return;
+        }
 
         // Check player is still online, if offline, cancel Detection Task
         isPlayerStillOnline();
 
         // Return early if failed
-        if (failed()) return;
+        if (failed()) {
+            return;
+        }
 
         // Set the hitBox from the detectedHitBox
         hitBox = new HashHitBox(detectedHitBox);
@@ -91,15 +103,19 @@ public class DetectionTask extends AsyncTask {
 
     private void detectBlock(Vector3i blockPosition) {
         // Return if we've already visited this location
-        if (!notVisited(blockPosition)) return;
+        if (!notVisited(blockPosition)) {
+            return;
+        }
 
         // Get the BlockType
         BlockType blockType = world.getBlockType(blockPosition);
 
         // Return if BlockType is Air OR is forbidden on CraftType
-        if (blockType.equals(BlockTypes.AIR)) return;
+        if (blockType.equals(BlockTypes.AIR)) {
+            return;
+        }
 
-        if (craft.getType().getForbiddenBlocks().contains(blockType)) {
+        if (craft.getType().getSetting(Defaults.ForbiddenBlocks.class).get().getValue().contains(blockType)) {
             fail(String.format("Found forbidden block %s at %s", blockType, blockPosition));
             return;
         }
@@ -110,11 +126,14 @@ public class DetectionTask extends AsyncTask {
         }
 
         // Check if sign, if so, do additional processing
-        if (blockType.equals(BlockTypes.STANDING_SIGN) || blockType.equals(BlockTypes.WALL_SIGN))
+        if (blockType.equals(BlockTypes.STANDING_SIGN) || blockType.equals(BlockTypes.WALL_SIGN)) {
             processSign(blockPosition);
+        }
 
         // Return if not one of the CraftType's allowed BlockTypes
-        if (!craft.getType().getAllowedBlocks().contains(blockType)) return;
+        if (!craft.getType().getSetting(Defaults.AllowedBlocks.class).get().getValue().contains(blockType)) {
+            return;
+        }
 
         // Add to blockList
         detectedHitBox.add(blockPosition);
@@ -160,7 +179,8 @@ public class DetectionTask extends AsyncTask {
                         commanderSignUsername = testUsername;
                         commanderSignId = testId;
 
-                    } else if (timestamp.getKey().equals(commanderSignTimeStamp.getKey()) && timestamp.getValue().before(commanderSignTimeStamp.getValue())) {
+                    } else if (timestamp.getKey().equals(commanderSignTimeStamp.getKey()) && timestamp.getValue()
+                            .before(commanderSignTimeStamp.getValue())) {
                         commanderSignTimeStamp = timestamp;
                         commanderSignUsername = testUsername;
                         commanderSignId = testId;
@@ -170,7 +190,7 @@ public class DetectionTask extends AsyncTask {
             }
 
             for (Text line : signText) {
-                if (craft.getType().getForbiddenSignStrings().contains(line.toString())) {
+                if (craft.getType().getSetting(Defaults.ForbiddenSignStrings.class).get().getValue().contains(line.toString())) {
                     fail("Detection Failed - Forbidden sign string found.");
                     break;
                 }
@@ -179,7 +199,7 @@ public class DetectionTask extends AsyncTask {
     }
 
     private void countFlyBlock(BlockType blockType) {
-        for (List<BlockType> flyBlockDef : craft.getType().getFlyBlocks().keySet()) {
+        for (List<BlockType> flyBlockDef : craft.getType().getSetting(Defaults.FlyBlocks.class).get().getValue().keySet()) {
             if (flyBlockDef.contains(blockType)) {
                 blockTypeCount.merge(flyBlockDef, 1, Integer::sum);
             } else {
@@ -189,7 +209,9 @@ public class DetectionTask extends AsyncTask {
     }
 
     private void confirmRequirements() {
-        if (failed()) return;
+        if (failed()) {
+            return;
+        }
 
         // Check Commander Sign
         checkCommanderSign();
@@ -198,7 +220,7 @@ public class DetectionTask extends AsyncTask {
         isWithinSizeLimits();
 
         // Check if CraftType requires contact with water
-        if (craft.getType().getRequireWaterContact() && !waterContact) {
+        if (craft.getType().getSetting(Defaults.RequireWaterContact.class).get().getValue() && !waterContact) {
             fail("Detection Failed - Water contact required but not found!");
             return;
         }
@@ -213,14 +235,14 @@ public class DetectionTask extends AsyncTask {
     }
 
     private void isOverMinSize() {
-        if (detectedHitBox.size() < craft.getType().getMinSize()) {
-            fail(String.format("Craft too small! Min Size: %d", craft.getType().getMinSize()));
+        if (detectedHitBox.size() < craft.getType().getSetting(Defaults.MinSize.class).get().getValue()) {
+            fail(String.format("Craft too small! Min Size: %d", craft.getType().getSetting(Defaults.MinSize.class).get().getValue()));
         }
     }
 
     private boolean isUnderMaxSize() {
-        if (detectedHitBox.size() > craft.getType().getMaxSize()) {
-            fail(String.format("Craft too large! Max Size: %d", craft.getType().getMaxSize()));
+        if (detectedHitBox.size() > craft.getType().getSetting(Defaults.MaxSize.class).get().getValue()) {
+            fail(String.format("Craft too large! Max Size: %d", craft.getType().getSetting(Defaults.MaxSize.class).get().getValue()));
             return false;
         }
 
@@ -243,7 +265,7 @@ public class DetectionTask extends AsyncTask {
     }
 
     private void checkFlyBlocks() {
-        Map<List<BlockType>, List<Double>> flyBlocks = craft.getType().getFlyBlocks();
+        Map<List<BlockType>, List<Double>> flyBlocks = craft.getType().getSetting(Defaults.FlyBlocks.class).get().getValue();
 
         for (List<BlockType> i : flyBlocks.keySet()) {
             Integer numberOfBlocks = blockTypeCount.get(i);
@@ -262,7 +284,8 @@ public class DetectionTask extends AsyncTask {
                 }
 
             } else if (numberOfBlocks < flyBlocks.get(i).get(0) - 10000.0) {
-                fail(String.format("Not enough flyblock" + ": %s %d < %d", i.get(0).getName(), numberOfBlocks, flyBlocks.get(i).get(0).intValue() - 10000));
+                fail(String.format("Not enough flyblock" + ": %s %d < %d", i.get(0).getName(), numberOfBlocks,
+                        flyBlocks.get(i).get(0).intValue() - 10000));
                 return;
 
             }
@@ -273,7 +296,8 @@ public class DetectionTask extends AsyncTask {
                     return;
                 }
             } else if (numberOfBlocks > flyBlocks.get(i).get(1) - 10000.0) {
-                fail(String.format("Too much flyblock" + ": %s %d > %d", i.get(0).getName(), numberOfBlocks, flyBlocks.get(i).get(1).intValue() - 10000));
+                fail(String.format("Too much flyblock" + ": %s %d > %d", i.get(0).getName(), numberOfBlocks,
+                        flyBlocks.get(i).get(1).intValue() - 10000));
                 return;
 
             }
@@ -292,13 +316,17 @@ public class DetectionTask extends AsyncTask {
         Craft originCraft = getParentCraft();
 
         // Return early if failed
-        if (failed()) return;
+        if (failed()) {
+            return;
+        }
 
         // Act based on subcraft or new parent from existing craft
         processIsSubcraft(originCraft);
 
         // Return early if failed
-        if (failed()) return;
+        if (failed()) {
+            return;
+        }
 
         // Set craft hitbox
         craft.setInitialSize(hitBox.size());
@@ -308,7 +336,7 @@ public class DetectionTask extends AsyncTask {
         processPhasedBlocks();
 
         // Check if CraftType can have crew
-        if (!craft.isSubCraft() && craft.getType().canHaveCrew()) {
+        if (!craft.isSubCraft() && craft.getType().getSetting(Defaults.CanHaveCrew.class).get().getValue()) {
             craft.addCrewMember(player.getUniqueId());
             craft.setCommander(player.getUniqueId());
         }
@@ -317,7 +345,9 @@ public class DetectionTask extends AsyncTask {
         isPlayerStillOnline();
 
         // Return early if failed
-        if (failed()) return;
+        if (failed()) {
+            return;
+        }
 
         // Fire craft detection event - Event should notify player and log itself in the console
         CraftDetectEvent event = new CraftDetectEvent(craft, player);
@@ -359,7 +389,7 @@ public class DetectionTask extends AsyncTask {
                 // Removing to fix issue #63 (Subcrafts disconnecting from parent craft)
                 // Can't remember why this exists...
                 //if (craft.getType().limitToParentHitBox()) {
-                    craft.setIsSubCraft();
+                craft.setIsSubCraft();
                 //}
 
                 return testCraft;
@@ -370,7 +400,7 @@ public class DetectionTask extends AsyncTask {
     }
 
     private void processIsSubcraft(Craft originCraft) {
-        if (originCraft == null && craft.getType().mustBeSubcraft()) {
+        if (originCraft == null && craft.getType().getSetting(Defaults.MustBeSubcraft.class).get().getValue()) {
             fail("Craft must be part of another craft!");
             return;
         }
@@ -390,7 +420,7 @@ public class DetectionTask extends AsyncTask {
 
     private void processPhasedBlocks() {
         final int waterLine = craft.getWaterLine();
-        if (!craft.getType().blockedByWater() && craft.getHitBox().getMinY() <= waterLine) {
+        if (!(!craft.getType().getSetting(Defaults.PassthroughBlocks.class).get().getValue().contains(BlockTypes.WATER) || !craft.getType().getSetting(Defaults.PassthroughBlocks.class).get().getValue().contains(BlockTypes.FLOWING_WATER)) && craft.getHitBox().getMinY() <= waterLine) {
             for (Vector3i location : craft.getHitBox().boundingHitBox()) {
                 if (location.getY() <= waterLine) {
                     craft.getPhasedBlocks().add(BlockTypes.WATER.getDefaultState().snapshotFor(new Location<>(craft.getWorld(), location)));

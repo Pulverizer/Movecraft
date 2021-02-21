@@ -5,7 +5,9 @@ import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.util.Direction;
 
 public abstract class ChatUtils {
-    public static final String MOVECRAFT_COMMAND_PREFIX = TextColors.GOLD + "[" + TextColors.WHITE + "Movecraft" + TextColors.GOLD + "] " + TextColors.RESET;
+
+    public static final String MOVECRAFT_COMMAND_PREFIX =
+            TextColors.GOLD + "[" + TextColors.WHITE + "Movecraft" + TextColors.GOLD + "] " + TextColors.RESET;
 
     public static String abbreviateDirection(Direction direction) {
         switch (direction) {

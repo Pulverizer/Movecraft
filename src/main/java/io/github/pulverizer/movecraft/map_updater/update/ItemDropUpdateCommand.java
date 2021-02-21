@@ -11,8 +11,10 @@ import org.spongepowered.api.world.World;
 
 import java.util.Objects;
 
-/**   Class that stores the data about a item drops to the map in an unspecified world. The world is retrieved contextually from the submitting craft.   */
+/**   Class that stores the data about a item drops to the map in an unspecified world. The world is retrieved contextually from the submitting
+ * craft.   */
 public class ItemDropUpdateCommand extends UpdateCommand {
+
     private final Location<World> location;
     private final ItemStack itemStack;
 
@@ -52,7 +54,7 @@ public class ItemDropUpdateCommand extends UpdateCommand {
 
     @Override
     public boolean equals(Object obj) {
-        if(!(obj instanceof ItemDropUpdateCommand)){
+        if (!(obj instanceof ItemDropUpdateCommand)) {
             return false;
         }
         ItemDropUpdateCommand other = (ItemDropUpdateCommand) obj;

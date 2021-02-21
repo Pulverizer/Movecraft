@@ -2,15 +2,12 @@ package io.github.pulverizer.movecraft.sign;
 
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.utils.BlockSnapshotSignDataUtil;
 import org.spongepowered.api.block.BlockSnapshot;
-import org.spongepowered.api.block.tileentity.Sign;
 import org.spongepowered.api.data.key.Keys;
-import org.spongepowered.api.data.manipulator.immutable.tileentity.ImmutableSignData;
-import org.spongepowered.api.data.value.immutable.ImmutableListValue;
-import org.spongepowered.api.data.value.mutable.ListValue;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.event.block.tileentity.ChangeSignEvent;
@@ -25,6 +22,7 @@ import org.spongepowered.api.util.Direction;
  * @version 1.34 - 20 Apr 2020
  */
 public final class RelativeMoveSign {
+
     private static final String HEADER = "RMove:";
 
     public static void onSignChange(ChangeSignEvent event, Player player) {
@@ -37,8 +35,9 @@ public final class RelativeMoveSign {
 
     public static void onSignClick(InteractBlockEvent.Secondary.MainHand event, Player player, BlockSnapshot block) {
 
-        if (!block.getLocation().isPresent())
+        if (!block.getLocation().isPresent()) {
             return;
+        }
 
         if (!BlockSnapshotSignDataUtil.getTextLine(block, 1).get().equalsIgnoreCase(HEADER)) {
             return;
@@ -50,12 +49,14 @@ public final class RelativeMoveSign {
             return;
         }
 
-        if (!craft.getType().getCanStaticMove()) {
+        if (!craft.getType().getSetting(Defaults.CanStaticMove.class).get().getValue()) {
             return;
         }
 
         // Use permissions
-        if (!player.hasPermission("movecraft." + craft.getType().getName() + ".movement.relativemove") && (craft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.movement.relativemove"))) {
+        if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".movement.relativemove") && (
+                craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player
+                        .hasPermission("movecraft.movement.relativemove"))) {
             player.sendMessage(Text.of("Insufficient Permissions"));
             return;
         }
@@ -68,20 +69,26 @@ public final class RelativeMoveSign {
         int dBackwardForward = Integer.parseInt(numbers[2]);
         // negative = backwards,
         // positive = forwards
-        int maxMove = craft.getType().maxStaticMove();
+        int maxMove = craft.getType().getSetting(Defaults.MaxStaticMove.class).get().getValue();
 
-        if (dLeftRight > maxMove)
+        if (dLeftRight > maxMove) {
             dLeftRight = maxMove;
-        if (dLeftRight < -maxMove)
+        }
+        if (dLeftRight < -maxMove) {
             dLeftRight = -maxMove;
-        if (dy > maxMove)
+        }
+        if (dy > maxMove) {
             dy = maxMove;
-        if (dy < -maxMove)
+        }
+        if (dy < -maxMove) {
             dy = -maxMove;
-        if (dBackwardForward > maxMove)
+        }
+        if (dBackwardForward > maxMove) {
             dBackwardForward = maxMove;
-        if (dBackwardForward < -maxMove)
+        }
+        if (dBackwardForward < -maxMove) {
             dBackwardForward = -maxMove;
+        }
         int dx = 0;
         int dz = 0;
 

@@ -4,7 +4,6 @@ import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.config.Settings;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.event.CraftDetectEvent;
-import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.utils.HashHitBox;
 import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.block.tileentity.Sign;
@@ -32,12 +31,14 @@ public class ContactsSign {
         }
     }
 
-    public static void onCraftDetect(CraftDetectEvent event, World world, HashHitBox hitBox){
+    public static void onCraftDetect(CraftDetectEvent event, World world, HashHitBox hitBox) {
 
-        for(Vector3i location : hitBox) {
+        for (Vector3i location : hitBox) {
 
-            if (world.getBlockType(location) != BlockTypes.WALL_SIGN && world.getBlockType(location) != BlockTypes.STANDING_SIGN || world.getTileEntity(location).isPresent())
+            if (world.getBlockType(location) != BlockTypes.WALL_SIGN && world.getBlockType(location) != BlockTypes.STANDING_SIGN || world
+                    .getTileEntity(location).isPresent()) {
                 continue;
+            }
 
             Sign sign = (Sign) world.getTileEntity(location).get();
             ListValue<Text> lines = sign.lines();
@@ -65,8 +66,8 @@ public class ContactsSign {
             }
         }
 
-        if(signLine < 4) {
-            for(int i = signLine; i < 4; i++) {
+        if (signLine < 4) {
+            for (int i = signLine; i < 4; i++) {
                 lines.set(signLine, Text.of(""));
             }
         }

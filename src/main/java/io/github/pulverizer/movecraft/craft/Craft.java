@@ -7,6 +7,7 @@ import io.github.pulverizer.movecraft.async.DetectionTask;
 import io.github.pulverizer.movecraft.async.RotationTask;
 import io.github.pulverizer.movecraft.async.TranslationTask;
 import io.github.pulverizer.movecraft.config.CraftType;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.enums.DirectControlMode;
 import io.github.pulverizer.movecraft.enums.Rotation;
 import io.github.pulverizer.movecraft.event.CraftSinkEvent;
@@ -35,7 +36,14 @@ import org.spongepowered.api.util.Direction;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -120,7 +128,7 @@ public class Craft {
         world = startLocation.getExtent();
 
         commandeeredBy = player.getUniqueId();
-        maxHeightLimit = Math.min(type.getMaxHeightLimit(), world.getDimension().getBuildHeight() - 1);
+        maxHeightLimit = Math.min(type.getSetting(Defaults.MaxHeightLimit.class).get().getValue(), world.getDimension().getBuildHeight() - 1);
 
         submitTask(new DetectionTask(this, startLocation, player));
     }
@@ -214,17 +222,17 @@ public class Craft {
             // Update hitbox by removing blocks that are not on the allowed list
             HashSet<BlockType> toRemove = new HashSet<>();
             blockMap.forEach((blockType, positions) -> {
-                if (!type.getAllowedBlocks().contains(blockType)) {
+                if (!type.getSetting(Defaults.AllowedBlocks.class).get().getValue().contains(blockType)) {
                     hitBox.removeAll(positions);
                     toRemove.add(blockType);
                 }
             });
             toRemove.forEach(blockMap::remove);
 
-            if (!type.getSpeedBlocks().isEmpty()) {
+            if (!type.getSetting(Defaults.SpeedBlocks.class).get().getValue().isEmpty()) {
                 float newSpeedBlockEffect = 1;
 
-                for (Set<BlockType> blockTypes : type.getSpeedBlocks().keySet()) {
+                for (Set<BlockType> blockTypes : type.getSetting(Defaults.SpeedBlocks.class).get().getValue().keySet()) {
                     int count = 0;
 
                     for (BlockType blockType : blockTypes) {
@@ -233,7 +241,7 @@ public class Craft {
 
 
                     float effect = (float) count / hitBox.size();
-                    effect = (float) (effect / type.getSpeedBlocks().get(blockTypes));
+                    effect = (float) (effect / type.getSetting(Defaults.SpeedBlocks.class).get().getValue().get(blockTypes));
                     newSpeedBlockEffect = newSpeedBlockEffect * Math.min(effect, 1);
                 }
 
@@ -254,7 +262,7 @@ public class Craft {
             }
         }*/
 
-            if (!sinking && type.getSinkPercent() != 0.0) {
+            if (!sinking && type.getSetting(Defaults.SinkPercent.class).get().getValue() != 0.0) {
                 boolean shouldSink = false;
 
                 HashMap<List<BlockType>, Integer> foundFlyBlocks = new HashMap<>();
@@ -267,7 +275,7 @@ public class Craft {
                 } else {
 
                     // count fly blocks
-                    type.getFlyBlocks().keySet().forEach(blockTypes -> {
+                    type.getSetting(Defaults.FlyBlocks.class).get().getValue().keySet().forEach(blockTypes -> {
                         int count = 0;
 
                         for (BlockType blockType : blockTypes) {
@@ -278,7 +286,7 @@ public class Craft {
                     });
 
                     // count move blocks
-                    type.getMoveBlocks().keySet().forEach(blockTypes -> {
+                    type.getSetting(Defaults.MoveBlocks.class).get().getValue().keySet().forEach(blockTypes -> {
                         int count = 0;
 
                         for (BlockType blockType : blockTypes) {
@@ -295,14 +303,14 @@ public class Craft {
                     // SinkPercent
 
                     // check we have enough of each fly block
-                    for (List<BlockType> blockTypes : type.getFlyBlocks().keySet()) {
+                    for (List<BlockType> blockTypes : type.getSetting(Defaults.FlyBlocks.class).get().getValue().keySet()) {
                         int numfound = 0;
                         if (foundFlyBlocks.get(blockTypes) != null) {
                             numfound = foundFlyBlocks.get(blockTypes);
                         }
                         double percent = ((double) numfound / (double) hitBox.size()) * 100.0;
-                        double flyPercent = type.getFlyBlocks().get(blockTypes).get(0);
-                        double sinkPercent = flyPercent * type.getSinkPercent() / 100.0;
+                        double flyPercent = type.getSetting(Defaults.FlyBlocks.class).get().getValue().get(blockTypes).get(0);
+                        double sinkPercent = flyPercent * type.getSetting(Defaults.SinkPercent.class).get().getValue() / 100.0;
 
                         if (percent < sinkPercent) {
                             shouldSink = true;
@@ -310,14 +318,14 @@ public class Craft {
                     }
 
                     // check we have enough of each move block
-                    for (List<BlockType> blockTypes : type.getMoveBlocks().keySet()) {
+                    for (List<BlockType> blockTypes : type.getSetting(Defaults.MoveBlocks.class).get().getValue().keySet()) {
                         int numfound = 0;
                         if (foundMoveBlocks.get(blockTypes) != null) {
                             numfound = foundMoveBlocks.get(blockTypes);
                         }
                         double percent = ((double) numfound / (double) hitBox.size()) * 100.0;
-                        double movePercent = type.getMoveBlocks().get(blockTypes).get(0);
-                        double disablePercent = movePercent * type.getSinkPercent() / 100.0;
+                        double movePercent = type.getSetting(Defaults.MoveBlocks.class).get().getValue().get(blockTypes).get(0);
+                        double disablePercent = movePercent * type.getSetting(Defaults.SinkPercent.class).get().getValue() / 100.0;
 
                         if (percent < disablePercent && !isDisabled() && !processing.get()) {
                             disable();
@@ -329,9 +337,9 @@ public class Craft {
                     }
 
                     // And check the overallsinkpercent
-                    if (type.getOverallSinkPercent() != 0.0) {
+                    if (type.getSetting(Defaults.OverallSinkPercent.class).get().getValue() != 0.0) {
                         double percent = ((double) hitBox.size() / (double) initialSize) * 100.0;
-                        if (percent < type.getOverallSinkPercent()) {
+                        if (percent < type.getSetting(Defaults.OverallSinkPercent.class).get().getValue()) {
                             shouldSink = true;
                         }
                     }
@@ -381,7 +389,7 @@ public class Craft {
                 "Currently commanded by " + Sponge.getServer().getPlayer(commander).orElse(null) + "\r" +
                 "Currently piloted by " + Sponge.getServer().getPlayer(pilot).orElse(null) + "\r" +
                 "\r" +
-                "Craft type: " + type.getName() + "\r" +
+                "Craft type: " + type.getSetting(Defaults.Name.class).get().getValue() + "\r" +
                 "Size " + hitBox.size() + " of original " + initialSize + "\r" +
                 "Position: " + hitBox.getMidPoint());
     }
@@ -419,7 +427,9 @@ public class Craft {
         if (crewList.contains(player) && player != null) {
             commander = player;
 
-            if (player == nextInCommand || nextInCommand == null) resetNextInCommand();
+            if (player == nextInCommand || nextInCommand == null) {
+                resetNextInCommand();
+            }
             return true;
         }
 
@@ -599,18 +609,26 @@ public class Craft {
     }
 
     public void removeCrewMember(UUID player) {
-        if (player == null) return;
+        if (player == null) {
+            return;
+        }
 
-        if (player == commander && nextInCommand != null) setCommander(nextInCommand);
+        if (player == commander && nextInCommand != null) {
+            setCommander(nextInCommand);
+        }
 
-        if (player == nextInCommand) resetNextInCommand();
+        if (player == nextInCommand) {
+            resetNextInCommand();
+        }
 
         resetCrewRole(player);
         crewList.remove(player);
     }
 
     public void resetCrewRole(UUID player) {
-        if (pilot == player) pilot = null;
+        if (pilot == player) {
+            pilot = null;
+        }
         aaDirectors.remove(player);
         cannonDirectors.remove(player);
         loaders.remove(player);
@@ -655,8 +673,9 @@ public class Craft {
 
     public boolean useFuel(double requiredPoints) {
 
-        if (requiredPoints < 0)
+        if (requiredPoints < 0) {
             return false;
+        }
 
         if (movePoints < requiredPoints) {
 
@@ -664,7 +683,7 @@ public class Craft {
             Map<BlockType, Set<Vector3i>> blockMap = hitBox.map(world);
 
             //Find all the furnace blocks
-            getType().getFurnaceBlocks().forEach(blockType -> {
+            getType().getSetting(Defaults.FurnaceBlocks.class).get().getValue().forEach(blockType -> {
                 if (blockMap.containsKey(blockType)) {
                     furnaceBlocks.addAll(blockMap.get(blockType));
                 }
@@ -675,12 +694,12 @@ public class Craft {
                 if (world.getTileEntity(furnaceLocation).isPresent() && world.getTileEntity(furnaceLocation).get() instanceof TileEntityCarrier) {
                     Inventory inventory = ((TileEntityCarrier) world.getTileEntity(furnaceLocation).get()).getInventory();
 
-                    Set<ItemType> fuelItems = getType().getFuelTypes().keySet();
+                    Set<ItemType> fuelItems = getType().getSetting(Defaults.FuelTypes.class).get().getValue().keySet();
 
                     for (ItemType fuelItem : fuelItems) {
                         if (inventory.contains(fuelItem)) {
 
-                            double fuelItemValue = getType().getFuelTypes().get(fuelItem);
+                            double fuelItemValue = getType().getSetting(Defaults.FuelTypes.class).get().getValue().get(fuelItem);
 
                             int oldValue = (int) Math.ceil((requiredPoints - movePoints) / fuelItemValue);
                             int newValue = inventory.query(QueryOperationTypes.ITEM_TYPE.of(fuelItem)).poll(oldValue).get().getQuantity();
@@ -688,13 +707,15 @@ public class Craft {
                             movePoints += newValue * fuelItemValue;
                         }
 
-                        if (movePoints >= requiredPoints)
+                        if (movePoints >= requiredPoints) {
                             break;
+                        }
                     }
                 }
 
-                if (movePoints >= requiredPoints)
+                if (movePoints >= requiredPoints) {
                     break;
+                }
 
             }
         }
@@ -714,7 +735,7 @@ public class Craft {
         Map<BlockType, Set<Vector3i>> blockMap = hitBox.map(world);
 
         //Find all the furnace blocks
-        getType().getFurnaceBlocks().forEach(blockType -> {
+        getType().getSetting(Defaults.FurnaceBlocks.class).get().getValue().forEach(blockType -> {
             if (blockMap.containsKey(blockType)) {
                 furnaceBlocks.addAll(blockMap.get(blockType));
             }
@@ -725,12 +746,13 @@ public class Craft {
             if (world.getTileEntity(furnaceLocation).isPresent() && world.getTileEntity(furnaceLocation).get() instanceof TileEntityCarrier) {
                 Inventory inventory = ((TileEntityCarrier) world.getTileEntity(furnaceLocation).get()).getInventory();
 
-                Set<ItemType> fuelItems = getType().getFuelTypes().keySet();
+                Set<ItemType> fuelItems = getType().getSetting(Defaults.FuelTypes.class).get().getValue().keySet();
 
                 for (ItemType fuelItem : fuelItems) {
                     if (inventory.contains(fuelItem)) {
 
-                        fuelStored += inventory.query(QueryOperationTypes.ITEM_TYPE.of(fuelItem)).totalItems() * getType().getFuelTypes().get(fuelItem);
+                        fuelStored +=
+                                inventory.query(QueryOperationTypes.ITEM_TYPE.of(fuelItem)).totalItems() * getType().getSetting(Defaults.FuelTypes.class).get().getValue().get(fuelItem);
 
                     }
                 }
@@ -771,7 +793,8 @@ public class Craft {
         }
 
         if (pilot != null) {
-            Sponge.getServer().getPlayer(pilot).ifPresent(player -> player.sendMessage(ChatTypes.ACTION_BAR, Text.of("Cruising " + ((vertical != Direction.NONE || horizontal != Direction.NONE) ? "Enabled" : "Disabled"))));
+            Sponge.getServer().getPlayer(pilot).ifPresent(player -> player.sendMessage(ChatTypes.ACTION_BAR,
+                    Text.of("Cruising " + ((vertical != Direction.NONE || horizontal != Direction.NONE) ? "Enabled" : "Disabled"))));
         }
 
         horizontalCruiseDirection = horizontal;
@@ -822,10 +845,12 @@ public class Craft {
                 signLines.set(0, Text.of("Descend: ON"));
 
                 // Then do Horizontal
-            } else if (signLines.get(0).toPlain().equalsIgnoreCase("Cruise: ON") && sign.getBlock().get(Keys.DIRECTION).get() != horizontalCruiseDirection) {
+            } else if (signLines.get(0).toPlain().equalsIgnoreCase("Cruise: ON")
+                    && sign.getBlock().get(Keys.DIRECTION).get() != horizontalCruiseDirection) {
                 signLines.set(0, Text.of("Cruise: OFF"));
 
-            } else if (signLines.get(0).toPlain().equalsIgnoreCase("Cruise: OFF") && sign.getBlock().get(Keys.DIRECTION).get() == horizontalCruiseDirection) {
+            } else if (signLines.get(0).toPlain().equalsIgnoreCase("Cruise: OFF")
+                    && sign.getBlock().get(Keys.DIRECTION).get() == horizontalCruiseDirection) {
                 signLines.set(0, Text.of("Cruise: ON"));
             }
 
@@ -835,11 +860,11 @@ public class Craft {
 
     public void translate(Vector3i displacement) {
         // check to see if the craft is trying to move in a direction not permitted by the type
-        if (!this.getType().allowHorizontalMovement() && !sinking) {
+        if (!this.getType().getSetting(Defaults.AllowHorizontalMovement.class).get().getValue() && !sinking) {
             displacement = new Vector3i(0, displacement.getY(), 0);
         }
 
-        if (!this.getType().allowVerticalMovement() && !sinking) {
+        if (!this.getType().getSetting(Defaults.AllowVerticalMovement.class).get().getValue() && !sinking) {
             displacement = new Vector3i(displacement.getX(), 0, displacement.getZ());
         }
 
@@ -847,7 +872,7 @@ public class Craft {
             return;
         }
 
-        if (!this.getType().allowVerticalTakeoffAndLanding() && displacement.getY() != 0 && !sinking) {
+        if (!this.getType().getSetting(Defaults.AllowVerticalTakeoffAndLanding.class).get().getValue() && displacement.getY() != 0 && !sinking) {
             if (displacement.getX() == 0 && displacement.getZ() == 0) {
                 return;
             }
@@ -862,8 +887,9 @@ public class Craft {
 
     public void rotate(Vector3i originPoint, Rotation rotation) {
         if (lastRotateTime + 1e9 > System.nanoTime() && !isSubCraft()) {
-            if (pilot != null)
+            if (pilot != null) {
                 Sponge.getServer().getPlayer(pilot).ifPresent(player -> player.sendMessage(Text.of("Rotation - Turning Too Quickly")));
+            }
             return;
         }
 
@@ -884,20 +910,20 @@ public class Craft {
     }
 
     public int getTickCooldown() {
-        float cooldown;
+        double cooldown;
 
         if (isCruising()) {
-            cooldown = type.getCruiseTickCooldown();
+            cooldown = type.getSetting(Defaults.CruiseTickCooldown.class).get().getValue();
         } else {
-            cooldown = type.getTickCooldown();
+            cooldown = type.getSetting(Defaults.TickCooldown.class).get().getValue();
         }
 
         // Apply speed blocks
         cooldown = cooldown * speedBlockEffect;
 
         // Apply map update punishment if applicable
-        if (!type.ignoreMapUpdateTime() && meanMoveTime > type.getTargetMoveTime()) {
-            cooldown = cooldown * (meanMoveTime / type.getTargetMoveTime());
+        if (!type.getSetting(Defaults.IgnoreMapUpdateTime.class).get().getValue() && meanMoveTime > type.getSetting(Defaults.TargetMoveTime.class).get().getValue()) {
+            cooldown = cooldown * (meanMoveTime / type.getSetting(Defaults.TargetMoveTime.class).get().getValue());
         }
 
         return (int) cooldown;
@@ -933,7 +959,7 @@ public class Craft {
         }
 
         return String.format("%s commanded by %s, size: %d, range: %d to the %s.",
-                contact.getType().getName(),
+                contact.getType().getSetting(Defaults.Name.class).get().getValue(),
                 commanderName,
                 contact.getInitialSize(),
                 (int) hitBox.getMidPoint().toFloat().distance(contact.getHitBox().getMidPoint().toFloat()),
@@ -945,7 +971,7 @@ public class Craft {
 
         float distance = hitBox.getMidPoint().toFloat().distance(contact.getHitBox().getMidPoint().toFloat());
 
-        String type = contact.getType().getName();
+        String type = contact.getType().getSetting(Defaults.Name.class).get().getValue();
 
         if (type.length() > 7) {
             type = type.substring(0, 7);
@@ -969,7 +995,6 @@ public class Craft {
         }
 
 
-
         if (string.length() > 16) {
             string = string.substring(0, 16);
         }
@@ -978,24 +1003,25 @@ public class Craft {
     }
 
     public void runContacts() {
-        if (!crewIsEmpty() && type.getSpottingMultiplier() > 0) {
+        if (!crewIsEmpty() && type.getSetting(Defaults.SpottingMultiplier.class).get().getValue() > 0) {
 
-            float viewRange = hitBox.size() * type.getSpottingMultiplier();
+            double viewRange = hitBox.size() * type.getSetting(Defaults.SpottingMultiplier.class).get().getValue();
 
             Vector3i spotterMiddle = hitBox.getMidPoint();
 
-            float viewRangeSquared = viewRange * viewRange;
+            double viewRangeSquared = viewRange * viewRange;
 
             for (final Craft contact : CraftManager.getInstance().getCraftsInWorld(world)) {
-                if (contact.getType().getDetectionMultiplier() > 0) {
+                if (contact.getType().getSetting(Defaults.DetectionMultiplier.class).get().getValue() > 0) {
                     Vector3i contactMiddle = contact.getHitBox().getMidPoint();
 
                     float distanceSquared = contactMiddle.toFloat().distanceSquared(spotterMiddle.toFloat());
 
                     if (distanceSquared <= viewRangeSquared && !hitBox.intersects(contact.getHitBox())) {
                         //TODO - implement Underwater Detection Multiplier
-                        float contactDetectability = (float) (contact.getHitBox().size() * contact.getType().getDetectionMultiplier());
-                        float detectableSizeAtDistanceSquared = hitBox.size() - ((distanceSquared / viewRangeSquared) * hitBox.size());
+                        float contactDetectability =
+                                (float) (contact.getHitBox().size() * contact.getType().getSetting(Defaults.DetectionMultiplier.class).get().getValue());
+                        double detectableSizeAtDistanceSquared = hitBox.size() - ((distanceSquared / viewRangeSquared) * hitBox.size());
 
                         if (contactDetectability > detectableSizeAtDistanceSquared) {
                             // craft has been detected
@@ -1018,7 +1044,7 @@ public class Craft {
             }
         }
 
-       for (Map.Entry<Craft, Integer> entry : contactTracking.entrySet()) {
+        for (Map.Entry<Craft, Integer> entry : contactTracking.entrySet()) {
             if (Sponge.getServer().getRunningTimeTicks() - entry.getValue() > 1200) {
                 contactTracking.remove(entry.getKey());
             }
@@ -1053,8 +1079,9 @@ public class Craft {
         //TODO: Remove this temporary system in favor of passthrough blocks. How tho???
         // Find the waterline from the surrounding terrain or from the static level in the craft type
         int waterLine = 0;
-        if (hitBox.isEmpty())
+        if (hitBox.isEmpty()) {
             return waterLine;
+        }
 
         // figure out the water level by examining blocks next to the outer boundaries of the craft
         for (int posY = hitBox.getMaxY() + 1; posY >= hitBox.getMinY() - 1; posY--) {
@@ -1065,34 +1092,42 @@ public class Craft {
             posZ = hitBox.getMinZ() - 1;
             for (posX = hitBox.getMinX() - 1; posX <= hitBox.getMaxX() + 1; posX++) {
                 BlockType typeID = world.getBlock(posX, posY, posZ).getType();
-                if (typeID == BlockTypes.WATER)
+                if (typeID == BlockTypes.WATER) {
                     numWater++;
-                if (typeID == BlockTypes.AIR)
+                }
+                if (typeID == BlockTypes.AIR) {
                     numAir++;
+                }
             }
             posZ = hitBox.getMaxZ() + 1;
             for (posX = hitBox.getMinX() - 1; posX <= hitBox.getMaxX() + 1; posX++) {
                 BlockType typeID = world.getBlock(posX, posY, posZ).getType();
-                if (typeID == BlockTypes.WATER)
+                if (typeID == BlockTypes.WATER) {
                     numWater++;
-                if (typeID == BlockTypes.AIR)
+                }
+                if (typeID == BlockTypes.AIR) {
                     numAir++;
+                }
             }
             posX = hitBox.getMinX() - 1;
             for (posZ = hitBox.getMinZ(); posZ <= hitBox.getMaxZ(); posZ++) {
                 BlockType typeID = world.getBlock(posX, posY, posZ).getType();
-                if (typeID == BlockTypes.WATER)
+                if (typeID == BlockTypes.WATER) {
                     numWater++;
-                if (typeID == BlockTypes.AIR)
+                }
+                if (typeID == BlockTypes.AIR) {
                     numAir++;
+                }
             }
             posX = hitBox.getMaxX() + 1;
             for (posZ = hitBox.getMinZ(); posZ <= hitBox.getMaxZ(); posZ++) {
                 BlockType typeID = world.getBlock(posX, posY, posZ).getType();
-                if (typeID == BlockTypes.WATER)
+                if (typeID == BlockTypes.WATER) {
                     numWater++;
-                if (typeID == BlockTypes.AIR)
+                }
+                if (typeID == BlockTypes.AIR) {
                     numAir++;
+                }
             }
             if (numWater > numAir) {
                 return posY;
@@ -1129,8 +1164,9 @@ public class Craft {
     public boolean hasCooldownExpired() {
         double ticksElapsed = Sponge.getServer().getRunningTimeTicks() - lastMoveTick;
         //TODO: Replace world.getSeaLevel() with something better
-        if (type.getUnderwaterSpeedMultiplier() > 0 && hitBox.getMinY() < world.getSeaLevel())
-            ticksElapsed = ticksElapsed * type.getUnderwaterSpeedMultiplier();
+        if (type.getSetting(Defaults.UnderwaterSpeedMultiplier.class).get().getValue() > 0 && hitBox.getMinY() < world.getSeaLevel()) {
+            ticksElapsed = ticksElapsed * type.getSetting(Defaults.UnderwaterSpeedMultiplier.class).get().getValue();
+        }
 
         return getTickCooldown() < ticksElapsed;
     }

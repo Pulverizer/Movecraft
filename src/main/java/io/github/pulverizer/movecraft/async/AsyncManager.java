@@ -3,6 +3,7 @@ package io.github.pulverizer.movecraft.async;
 import com.flowpowered.math.vector.Vector3i;
 import com.google.common.collect.Sets;
 import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.enums.DirectControlMode;
@@ -17,6 +18,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class AsyncManager implements Runnable {
+
     private static AsyncManager ourInstance;
     private final BlockingQueue<AsyncTask> taskQueue = new LinkedBlockingQueue<>();
     private final HashSet<Craft> clearanceSet = new HashSet<>();
@@ -24,7 +26,9 @@ public class AsyncManager implements Runnable {
     private int lastContactCheck = 0;
 
     public static AsyncManager getInstance() {
-        if (ourInstance == null) initialize();
+        if (ourInstance == null) {
+            initialize();
+        }
 
         return ourInstance;
     }
@@ -62,7 +66,8 @@ public class AsyncManager implements Runnable {
                 continue;
             }
 
-            if (craft.getType().getCruiseOnPilot() && craft.getType().getCruiseOnPilotMaxMoves() > 0 && craft.getType().getCruiseOnPilotMaxMoves() <= craft.getNumberOfMoves()) {
+            if (craft.getType().getSetting(Defaults.CruiseOnPilot.class).get().getValue() && craft.getType().getSetting(Defaults.CruiseOnPilotMaxMoves.class).get().getValue() > 0
+                    && craft.getType().getSetting(Defaults.CruiseOnPilotMaxMoves.class).get().getValue() <= craft.getNumberOfMoves()) {
                 craft.sink();
             }
 
@@ -73,12 +78,15 @@ public class AsyncManager implements Runnable {
             if (craft.getDirectControlMode().equals(DirectControlMode.B)) {
 
                 Player pilot = Sponge.getServer().getPlayer(craft.getPilot()).get();
-                if (pilot.get(Keys.IS_SNEAKING).get())
+                if (pilot.get(Keys.IS_SNEAKING).get()) {
                     dive = true;
-                if (((PlayerInventory) pilot.getInventory()).getHotbar().getSelectedSlotIndex() == 3)
+                }
+                if (((PlayerInventory) pilot.getInventory()).getHotbar().getSelectedSlotIndex() == 3) {
                     bankLeft = true;
-                if (((PlayerInventory) pilot.getInventory()).getHotbar().getSelectedSlotIndex() == 5)
+                }
+                if (((PlayerInventory) pilot.getInventory()).getHotbar().getSelectedSlotIndex() == 5) {
                     bankRight = true;
+                }
             }
 
             int dx = 0;
@@ -88,20 +96,20 @@ public class AsyncManager implements Runnable {
             // ascend
             if (craft.getVerticalCruiseDirection() == Direction.UP) {
                 if (craft.getHorizontalCruiseDirection() != Direction.NONE) {
-                    dy = (1 + craft.getType().getVertCruiseSkipBlocks()) >> 1;
+                    dy = (1 + craft.getType().getSetting(Defaults.VertCruiseSkipBlocks.class).get().getValue()) >> 1;
                 } else {
-                    dy = 1 + craft.getType().getVertCruiseSkipBlocks();
+                    dy = 1 + craft.getType().getSetting(Defaults.VertCruiseSkipBlocks.class).get().getValue();
                 }
             }
             // descend
             if (craft.getVerticalCruiseDirection() == Direction.DOWN) {
                 if (craft.getHorizontalCruiseDirection() != Direction.NONE) {
-                    dy = (-1 - craft.getType().getVertCruiseSkipBlocks()) >> 1;
+                    dy = (-1 - craft.getType().getSetting(Defaults.VertCruiseSkipBlocks.class).get().getValue()) >> 1;
                 } else {
-                    dy = -1 - craft.getType().getVertCruiseSkipBlocks();
+                    dy = -1 - craft.getType().getSetting(Defaults.VertCruiseSkipBlocks.class).get().getValue();
                 }
             } else if (dive) {
-                dy = -((craft.getType().getCruiseSkipBlocks() + 1) >> 1);
+                dy = -((craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue() + 1) >> 1);
                 if (craft.getHitBox().getMinY() <= craft.getWorld().getSeaLevel()) {
                     dy = -1;
                 }
@@ -109,49 +117,49 @@ public class AsyncManager implements Runnable {
 
             switch (craft.getHorizontalCruiseDirection()) {
                 case WEST:
-                    dx = 1 + craft.getType().getCruiseSkipBlocks();
+                    dx = 1 + craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue();
                     if (bankRight) {
-                        dz = (-1 - craft.getType().getCruiseSkipBlocks()) >> 1;
+                        dz = (-1 - craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue()) >> 1;
                     }
 
                     if (bankLeft) {
-                        dz = (1 + craft.getType().getCruiseSkipBlocks()) >> 1;
+                        dz = (1 + craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue()) >> 1;
                     }
 
                     break;
 
                 case EAST:
-                    dx = -1 - craft.getType().getCruiseSkipBlocks();
+                    dx = -1 - craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue();
                     if (bankRight) {
-                        dz = (1 + craft.getType().getCruiseSkipBlocks()) >> 1;
+                        dz = (1 + craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue()) >> 1;
                     }
 
                     if (bankLeft) {
-                        dz = (-1 - craft.getType().getCruiseSkipBlocks()) >> 1;
+                        dz = (-1 - craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue()) >> 1;
                     }
 
                     break;
 
                 case NORTH:
-                    dz = 1 + craft.getType().getCruiseSkipBlocks();
+                    dz = 1 + craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue();
                     if (bankRight) {
-                        dx = (-1 - craft.getType().getCruiseSkipBlocks()) >> 1;
+                        dx = (-1 - craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue()) >> 1;
                     }
 
                     if (bankLeft) {
-                        dx = (1 + craft.getType().getCruiseSkipBlocks()) >> 1;
+                        dx = (1 + craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue()) >> 1;
                     }
 
                     break;
 
                 case SOUTH:
-                    dz = -1 - craft.getType().getCruiseSkipBlocks();
+                    dz = -1 - craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue();
                     if (bankRight) {
-                        dx = (1 + craft.getType().getCruiseSkipBlocks()) >> 1;
+                        dx = (1 + craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue()) >> 1;
                     }
 
                     if (bankLeft) {
-                        dx = (-1 - craft.getType().getCruiseSkipBlocks()) >> 1;
+                        dx = (-1 - craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue()) >> 1;
                     }
 
                     break;
@@ -188,13 +196,13 @@ public class AsyncManager implements Runnable {
             }
 
             long ticksElapsed = Sponge.getServer().getRunningTimeTicks() - craft.getLastMoveTick();
-            if (Math.abs(ticksElapsed) < craft.getType().getSinkRateTicks()) {
+            if (Math.abs(ticksElapsed) < craft.getType().getSetting(Defaults.SinkRateTicks.class).get().getValue()) {
                 return;
             }
 
             int dx = 0;
             int dz = 0;
-            if (craft.getType().getKeepMovingOnSink()) {
+            if (craft.getType().getSetting(Defaults.KeepMovingOnSink.class).get().getValue()) {
                 dx = craft.getLastMoveVector().getX();
                 dz = craft.getLastMoveVector().getZ();
             }

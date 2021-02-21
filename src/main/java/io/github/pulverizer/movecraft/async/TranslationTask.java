@@ -4,6 +4,7 @@ import com.flowpowered.math.vector.Vector3i;
 import com.google.common.collect.ImmutableSet;
 import io.github.pulverizer.movecraft.Movecraft;
 import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.event.CraftTranslateEvent;
@@ -48,18 +49,22 @@ public class TranslationTask extends AsyncTask {
                     BlockTypes.BIRCH_FENCE, BlockTypes.DARK_OAK_FENCE, BlockTypes.JUNGLE_FENCE, BlockTypes.NETHER_BRICK_FENCE,
                     BlockTypes.SPRUCE_FENCE, BlockTypes.UNPOWERED_REPEATER, BlockTypes.POWERED_REPEATER, BlockTypes.WATERLILY, BlockTypes.CARROTS,
                     BlockTypes.POTATOES, BlockTypes.WOODEN_BUTTON, BlockTypes.CARPET);
-
-    private Vector3i displacement;
-    private HashHitBox newHitBox;
+    private static final Vector3i[] SHIFTS = {
+            new Vector3i(1, 0, 0),
+            new Vector3i(-1, 0, 0),
+            new Vector3i(0, 0, 1),
+            new Vector3i(0, 0, -1)
+    };
     private final HashHitBox oldHitBox;
-    private boolean collisionExplosion = false;
     private final Collection<UpdateCommand> updates = new HashSet<>();
     private final World world;
-
-    private final List<BlockType> harvestBlocks = craft.getType().getHarvestBlocks();
+    private final List<BlockType> harvestBlocks = craft.getType().getSetting(Defaults.HarvestBlocks.class).get().getValue();
     private final HashSet<Vector3i> harvestedBlocks = new HashSet<>();
-    private final List<BlockType> harvesterBladeBlocks = craft.getType().getHarvesterBladeBlocks();
+    private final List<BlockType> harvesterBladeBlocks = craft.getType().getSetting(Defaults.HarvesterBladeBlocks.class).get().getValue();
     private final HashHitBox collisionBox = new HashHitBox();
+    private Vector3i displacement;
+    private HashHitBox newHitBox;
+    private boolean collisionExplosion = false;
 
     public TranslationTask(Craft craft, Vector3i displacement) {
         super(craft, "Translation");
@@ -82,7 +87,7 @@ public class TranslationTask extends AsyncTask {
         }
 
         // Use some fuel if needed
-        double fuelBurnRate = getCraft().getType().getFuelBurnRate();
+        double fuelBurnRate = getCraft().getType().getSetting(Defaults.FuelBurnRate.class).get().getValue();
         if (fuelBurnRate > 0 && !getCraft().isSinking()) {
             if (!getCraft().useFuel(fuelBurnRate)) {
                 fail("Craft out of fuel");
@@ -111,7 +116,7 @@ public class TranslationTask extends AsyncTask {
         }
 
         // Clean up torpedoes after explosion
-        if (!collisionBox.isEmpty() && craft.getType().getCruiseOnPilot() && craft.getType().getCollisionExplosion() > 0) {
+        if (!collisionBox.isEmpty() && craft.getType().getSetting(Defaults.CruiseOnPilot.class).get().getValue() && craft.getType().getSetting(Defaults.CollisionExplosion.class).get().getValue() > 0) {
             craft.release(null);
 
             for (Vector3i location : oldHitBox) {
@@ -141,10 +146,10 @@ public class TranslationTask extends AsyncTask {
 
         // Check if the craft is too high
         if (displacement.getY() > -1) {
-            if (craft.getMaxHeightLimit() < maxY || (displacement.getY() == 0 && craft.getType().getUseGravity())) {
+            if (craft.getMaxHeightLimit() < maxY || (displacement.getY() == 0 && craft.getType().getSetting(Defaults.UseGravity.class).get().getValue())) {
                 displacement = new Vector3i(displacement.getX(), -1, displacement.getZ());
 
-            } else if (craft.getType().getMaxHeightAboveGround() > 0) {
+            } else if (craft.getType().getSetting(Defaults.MaxHeightAboveGround.class).get().getValue() > 0) {
 
                 final Vector3i middle = oldHitBox.getMidPoint().add(displacement);
                 int testY = minY;
@@ -154,13 +159,13 @@ public class TranslationTask extends AsyncTask {
 
                     // TODO - Probably won't work in newer versions with kelp, etc
                     if (craft.getWorld().getBlockType(middle.getX(), testY, middle.getZ()) != BlockTypes.AIR && (
-                            !craft.getType().getCanHoverOverWater()
+                            !craft.getType().getSetting(Defaults.CanHoverOverWater.class).get().getValue()
                                     || craft.getWorld().getBlockType(middle.getX(), testY, middle.getZ()) != BlockTypes.WATER)) {
                         break;
                     }
                 }
 
-                if (minY - testY > craft.getType().getMaxHeightAboveGround()) {
+                if (minY - testY > craft.getType().getSetting(Defaults.MaxHeightAboveGround.class).get().getValue()) {
                     displacement = new Vector3i(displacement.getX(), -1, displacement.getZ());
                 }
             }
@@ -172,7 +177,7 @@ public class TranslationTask extends AsyncTask {
             return false;
 
             // Or too low
-        } else if (displacement.getY() < 0 && minY + displacement.getY() < craft.getType().getMinHeightLimit() && !craft.isSinking()) {
+        } else if (displacement.getY() < 0 && minY + displacement.getY() < craft.getType().getSetting(Defaults.MinHeightLimit.class).get().getValue() && !craft.isSinking()) {
             fail("Translation Failed - Craft hit minimum height limit.");
             return false;
         }
@@ -204,7 +209,8 @@ public class TranslationTask extends AsyncTask {
             if (craft.isSinking()) {
                 blockObstructed = !FALL_THROUGH_BLOCKS.contains(testMaterial);
             } else {
-                blockObstructed = !testMaterial.equals(BlockTypes.AIR) && !craft.getType().getPassthroughBlocks().contains(testMaterial);
+                blockObstructed = !testMaterial.equals(BlockTypes.AIR)
+                        && !craft.getType().getSetting(Defaults.PassthroughBlocks.class).get().getValue().contains(testMaterial);
             }
 
             boolean ignoreBlock = false;
@@ -251,7 +257,7 @@ public class TranslationTask extends AsyncTask {
                     harvestedBlocks.clear();
                     return craftObstructed();
 
-                } else if (!craft.isSinking() && craft.getType().getCollisionExplosion() == 0.0F) {
+                } else if (!craft.isSinking() && craft.getType().getSetting(Defaults.CollisionExplosion.class).get().getValue() == 0.0F) {
                     fail(String.format("Translation Failed - Craft is obstructed" + " @ %d,%d,%d,%s", newLocation.getX(), newLocation.getY(),
                             newLocation.getZ(), testMaterial.getName()));
                     return true;
@@ -267,7 +273,6 @@ public class TranslationTask extends AsyncTask {
         return false;
     }
 
-
     private boolean checkChests(BlockType mBlock, Vector3i newLoc) {
         for (Vector3i shift : SHIFTS) {
             Vector3i aroundNewLoc = newLoc.add(shift);
@@ -279,20 +284,14 @@ public class TranslationTask extends AsyncTask {
         return false;
     }
 
-    private static final Vector3i[] SHIFTS = {
-            new Vector3i(1, 0, 0),
-            new Vector3i(-1, 0, 0),
-            new Vector3i(0, 0, 1),
-            new Vector3i(0, 0, -1)
-    };
-
     private void processSinking() {
         for (Vector3i location : collisionBox) {
-            if (craft.getType().getExplodeOnCrash() > 0.0F
+            if (craft.getType().getSetting(Defaults.ExplodeOnCrash.class).get().getValue() > 0.0F
                     && !world.getBlockType(location).equals(BlockTypes.AIR)
                     && ThreadLocalRandom.current().nextDouble(1) < .05) {
 
-                updates.add(new ExplosionUpdateCommand(world, location, craft.getType().getExplodeOnCrash()));
+                updates.add(new ExplosionUpdateCommand(world, location,
+                        craft.getType().getSetting(Defaults.ExplodeOnCrash.class).get().getValue()));
                 collisionExplosion = true;
             }
 
@@ -307,11 +306,11 @@ public class TranslationTask extends AsyncTask {
             newHitBox.removeAll(toRemove);
         }
 
-        if (craft.getType().getSmokeOnSink() > 0) {
+        if (craft.getType().getSetting(Defaults.SmokeOnSink.class).get().getValue() > 0) {
             for (Vector3i location : newHitBox) {
-                if (ThreadLocalRandom.current().nextInt(craft.getType().getSmokeOnSink()) < 1) {
+                if (ThreadLocalRandom.current().nextInt(craft.getType().getSetting(Defaults.SmokeOnSink.class).get().getValue()) < 1) {
                     updates.add(new ParticleUpdateCommand(new Location<>(world, location), ParticleTypes.LARGE_SMOKE,
-                            craft.getType().getSmokeOnSinkQuantity()));
+                            craft.getType().getSetting(Defaults.SmokeOnSinkQuantity.class).get().getValue()));
                 }
             }
         }
@@ -320,14 +319,15 @@ public class TranslationTask extends AsyncTask {
     private void processNotSinking() {
         //TODO - Make arming time a craft config setting
         //  Use number of moves instead? - System time doesn't work so well if the server is lagging
-        if (craft.getType().getCollisionExplosion() > 0.0F && System.currentTimeMillis() - craft.commandeeredAt() >= 1000) {
+        if (craft.getType().getSetting(Defaults.CollisionExplosion.class).get().getValue() > 0.0F
+                && System.currentTimeMillis() - craft.commandeeredAt() >= 1000) {
 
             for (Vector3i location : collisionBox) {
 
                 float explosionKey;
-                float explosionForce = craft.getType().getCollisionExplosion();
+                float explosionForce = craft.getType().getSetting(Defaults.CollisionExplosion.class).get().getValue();
 
-                if (craft.getType().getFocusedExplosion()) {
+                if (craft.getType().getSetting(Defaults.FocusedExplosion.class).get().getValue()) {
                     explosionForce *= oldHitBox.size();
                 }
 
@@ -343,7 +343,8 @@ public class TranslationTask extends AsyncTask {
                     collisionExplosion = true;
                 }
 
-                if (craft.getType().getFocusedExplosion()) { // don't handle any further collisions if it is set to focusedexplosion
+                if (craft.getType().getSetting(Defaults.FocusedExplosion.class).get().getValue()) { // don't handle any further collisions if
+                    // it is set to focusedexplosion
                     break;
                 }
             }
@@ -351,7 +352,7 @@ public class TranslationTask extends AsyncTask {
     }
 
     private void moveEntities() throws InterruptedException {
-        if (craft.getType().getMoveEntities() && !craft.isSinking()) {
+        if (craft.getType().getSetting(Defaults.MoveEntities.class).get().getValue() && !craft.isSinking()) {
 
             AtomicBoolean processedEntities = new AtomicBoolean(false);
 
@@ -362,7 +363,8 @@ public class TranslationTask extends AsyncTask {
                                         oldHitBox.getMaxY() + 1.5, oldHitBox.getMaxZ() + 1.5))) {
 
                             if (entity.getType() == EntityTypes.PLAYER || entity.getType() == EntityTypes.PRIMED_TNT
-                                    || entity.getType() == EntityTypes.ITEM || !craft.getType().onlyMovePlayers()) {
+                                    || entity.getType() == EntityTypes.ITEM || !craft.getType().getSetting(Defaults.OnlyMovePlayers.class).get()
+                                    .getValue()) {
                                 EntityUpdateCommand eUp = new EntityUpdateCommand(entity,
                                         entity.getLocation().getPosition().add(displacement.getX(), displacement.getY(), displacement.getZ()), 0);
                                 updates.add(eUp);
@@ -396,7 +398,7 @@ public class TranslationTask extends AsyncTask {
         } else {
             // Handle auto Craft release
             //add releaseTask without playermove to manager
-            if (!craft.getType().getCruiseOnPilot() && !craft
+            if (!craft.getType().getSetting(Defaults.CruiseOnPilot.class).get().getValue() && !craft
                     .isSinking())  // not necessary to release cruiseonpilot crafts, because they will already be released
             {
                 CraftManager.getInstance().addReleaseTask(craft);

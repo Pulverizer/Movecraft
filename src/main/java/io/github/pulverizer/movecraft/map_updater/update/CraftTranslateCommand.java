@@ -3,6 +3,7 @@ package io.github.pulverizer.movecraft.map_updater.update;
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.Movecraft;
 import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.event.SignTranslateEvent;
 import io.github.pulverizer.movecraft.utils.CollectionUtils;
@@ -54,7 +55,7 @@ public class CraftTranslateCommand extends UpdateCommand {
             return;
         }
 
-        final Set<BlockType> passthroughBlocks = new HashSet<>(craft.getType().getPassthroughBlocks());
+        final Set<BlockType> passthroughBlocks = new HashSet<>(craft.getType().getSetting(Defaults.PassthroughBlocks.class).get().getValue());
         if (craft.isSinking()) {
             passthroughBlocks.add(BlockTypes.WATER);
             passthroughBlocks.add(BlockTypes.FLOWING_WATER);

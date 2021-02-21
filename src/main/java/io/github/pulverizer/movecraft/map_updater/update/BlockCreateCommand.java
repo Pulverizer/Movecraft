@@ -23,7 +23,6 @@ public class BlockCreateCommand extends UpdateCommand {
     }
 
 
-
     public BlockCreateCommand(World world, Vector3i newBlockLocation, BlockType block) {
         this.newBlockLocation = newBlockLocation;
         this.block = block.getDefaultState().snapshotFor(new Location<>(world, newBlockLocation));
@@ -44,7 +43,7 @@ public class BlockCreateCommand extends UpdateCommand {
 
     @Override
     public boolean equals(Object obj) {
-        if(!(obj instanceof BlockCreateCommand)){
+        if (!(obj instanceof BlockCreateCommand)) {
             return false;
         }
         BlockCreateCommand other = (BlockCreateCommand) obj;

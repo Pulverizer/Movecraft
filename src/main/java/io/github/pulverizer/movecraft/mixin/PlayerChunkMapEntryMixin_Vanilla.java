@@ -10,15 +10,14 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.common.SpongeImpl;
 
 import java.util.List;
 
 @Mixin(PlayerChunkMapEntry.class)
 public abstract class PlayerChunkMapEntryMixin_Vanilla {
 
-    @Final @Shadow private List<EntityPlayerMP> players;
     @Final @Shadow private static Logger LOGGER;
+    @Final @Shadow private List<EntityPlayerMP> players;
     @Final @Shadow private ChunkPos pos;
     @Shadow private long lastUpdateInhabitedTime;
     @Final @Shadow private PlayerChunkMap playerChunkMap;

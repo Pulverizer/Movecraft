@@ -5,6 +5,7 @@ import org.spongepowered.api.event.Cancellable;
 import org.spongepowered.api.event.cause.Cause;
 
 public class CraftSinkEvent extends CraftEvent implements Cancellable {
+
     private boolean cancelled = false;
 
     public CraftSinkEvent(Craft craft) {

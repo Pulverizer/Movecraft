@@ -2,6 +2,7 @@ package io.github.pulverizer.movecraft.sign;
 
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.event.CraftDetectEvent;
@@ -34,12 +35,14 @@ public class AscendSign {
         }
     }
 
-    public static void onCraftDetect(CraftDetectEvent event, World world, HashHitBox hitBox){
+    public static void onCraftDetect(CraftDetectEvent event, World world, HashHitBox hitBox) {
 
-        for(Vector3i location: hitBox) {
+        for (Vector3i location : hitBox) {
 
-            if(world.getBlockType(location) != BlockTypes.WALL_SIGN && world.getBlockType(location) != BlockTypes.STANDING_SIGN || !world.getTileEntity(location).isPresent())
+            if (world.getBlockType(location) != BlockTypes.WALL_SIGN && world.getBlockType(location) != BlockTypes.STANDING_SIGN || !world
+                    .getTileEntity(location).isPresent()) {
                 continue;
+            }
 
             Sign sign = (Sign) world.getTileEntity(location).get();
             ListValue<Text> lines = sign.lines();
@@ -55,19 +58,23 @@ public class AscendSign {
 
         Craft craft = CraftManager.getInstance().getCraftByPlayer(player.getUniqueId());
 
-        if (!block.getLocation().isPresent() || !block.getLocation().get().getTileEntity().isPresent() || craft == null || craft.getPilot() != player.getUniqueId())
+        if (!block.getLocation().isPresent() || !block.getLocation().get().getTileEntity().isPresent() || craft == null || craft.getPilot() != player
+                .getUniqueId()) {
             return;
+        }
 
         Sign sign = (Sign) block.getLocation().get().getTileEntity().get();
         ListValue<Text> lines = sign.lines();
         if (lines.get(0).toPlain().equalsIgnoreCase("Ascend: OFF")) {
 
-            if (!craft.getType().getCanCruise()) {
+            if (!craft.getType().getSetting(Defaults.CanCruise.class).get().getValue()) {
                 player.sendMessage(Text.of("This CraftType does not support this action"));
                 return;
             }
 
-            if (!player.hasPermission("movecraft." + craft.getType().getName().toLowerCase() + ".movement.ascend") && (craft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.movement.ascend"))) {
+            if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".movement"
+                    + ".ascend") && (craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player
+                    .hasPermission("movecraft.movement.ascend"))) {
                 player.sendMessage(Text.of("Insufficient Permissions"));
                 return;
             }

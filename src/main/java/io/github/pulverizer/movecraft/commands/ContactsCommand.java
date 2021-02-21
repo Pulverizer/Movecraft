@@ -1,7 +1,6 @@
 package io.github.pulverizer.movecraft.commands;
 
 import io.github.pulverizer.movecraft.Movecraft;
-import io.github.pulverizer.movecraft.config.CraftType;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import org.spongepowered.api.Sponge;
@@ -17,6 +16,16 @@ import org.spongepowered.api.text.Text;
 import java.util.ArrayList;
 
 public class ContactsCommand implements CommandExecutor {
+
+    public static void register() {
+        CommandSpec commandSpec = CommandSpec.builder()
+                .description(Text.of("Lists all contacts from radar"))
+                .executor(new ContactsCommand())
+                .build();
+
+        Sponge.getCommandManager().register(Movecraft.getInstance(), commandSpec, "contacts");
+    }
+
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
         // Contacts:
@@ -40,14 +49,5 @@ public class ContactsCommand implements CommandExecutor {
         } else {
             return CommandResult.empty();
         }
-    }
-
-    public static void register() {
-        CommandSpec commandSpec = CommandSpec.builder()
-                .description(Text.of("Lists all contacts from radar"))
-                .executor(new ContactsCommand())
-                .build();
-
-        Sponge.getCommandManager().register(Movecraft.getInstance(), commandSpec, "contacts");
     }
 }

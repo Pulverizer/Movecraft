@@ -4,6 +4,7 @@ import com.flowpowered.math.vector.Vector3d;
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.Movecraft;
 import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.enums.Rotation;
@@ -34,11 +35,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RotationTask extends AsyncTask {
 
+    private static final Vector3i[] SHIFTS = {
+            new Vector3i(1, 0, 0),
+            new Vector3i(-1, 0, 0),
+            new Vector3i(0, 0, 1),
+            new Vector3i(0, 0, -1)
+    };
     private final Vector3i originPoint;
     private final Rotation rotation;
     private final World world;
     private final Set<UpdateCommand> updates = new HashSet<>();
-
     private final HashHitBox oldHitBox;
     private final HashHitBox newHitBox;
 
@@ -60,7 +66,7 @@ public class RotationTask extends AsyncTask {
         }
 
         // Use some fuel if needed
-        double fuelBurnRate = getCraft().getType().getFuelBurnRate();
+        double fuelBurnRate = getCraft().getType().getSetting(Defaults.FuelBurnRate.class).get().getValue();
         if (fuelBurnRate > 0 && !getCraft().isSinking()) {
             if (!getCraft().useFuel(fuelBurnRate)) {
                 fail("Craft out of fuel");
@@ -110,7 +116,7 @@ public class RotationTask extends AsyncTask {
         final Vector3d tOP = originPoint.toDouble().add(0.5, 0, 0.5);
 
         //prevents torpedo and rocket passengers
-        if (craft.getType().getMoveEntities() && !craft.isSinking()) {
+        if (craft.getType().getSetting(Defaults.MoveEntities.class).get().getValue() && !craft.isSinking()) {
 
             if (Settings.Debug) {
                 Movecraft.getInstance().getLogger().info("Craft moves Entities.");
@@ -125,7 +131,7 @@ public class RotationTask extends AsyncTask {
                                         oldHitBox.getMaxY() + 1.5, oldHitBox.getMaxZ() + 1.5))) {
 
                             if (entity.getType() == EntityTypes.PLAYER || entity.getType() == EntityTypes.PRIMED_TNT
-                                    || entity.getType() == EntityTypes.ITEM || !craft.getType().onlyMovePlayers()) {
+                                    || entity.getType() == EntityTypes.ITEM || !craft.getType().getSetting(Defaults.OnlyMovePlayers.class).get().getValue()) {
 
                                 Location<World> adjustedPLoc = entity.getLocation().sub(tOP);
 
@@ -176,7 +182,7 @@ public class RotationTask extends AsyncTask {
 
 
             BlockType newMaterial = world.getBlockType(newLocation);
-            if (newMaterial != BlockTypes.AIR && !craft.getType().getPassthroughBlocks().contains(newMaterial)) {
+            if (newMaterial != BlockTypes.AIR && !craft.getType().getSetting(Defaults.PassthroughBlocks.class).get().getValue().contains(newMaterial)) {
                 fail(String.format("Craft is obstructed" + " @ %d,%d,%d", newLocation.getX(), newLocation.getY(), newLocation.getZ()));
                 break;
             }
@@ -253,13 +259,6 @@ public class RotationTask extends AsyncTask {
 
         return true;
     }
-
-    private static final Vector3i[] SHIFTS = {
-            new Vector3i(1, 0, 0),
-            new Vector3i(-1, 0, 0),
-            new Vector3i(0, 0, 1),
-            new Vector3i(0, 0, -1)
-    };
 
     public HashHitBox getNewHitBox() {
         return newHitBox;

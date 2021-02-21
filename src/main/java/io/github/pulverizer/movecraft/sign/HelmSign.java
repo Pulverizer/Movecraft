@@ -1,21 +1,17 @@
 package io.github.pulverizer.movecraft.sign;
 
-import io.github.pulverizer.movecraft.Movecraft;
 import io.github.pulverizer.movecraft.config.Settings;
-import io.github.pulverizer.movecraft.enums.Rotation;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
+import io.github.pulverizer.movecraft.craft.CraftManager;
+import io.github.pulverizer.movecraft.enums.Rotation;
 import io.github.pulverizer.movecraft.utils.BlockSnapshotSignDataUtil;
 import io.github.pulverizer.movecraft.utils.MathUtils;
-import io.github.pulverizer.movecraft.craft.CraftManager;
 import org.spongepowered.api.block.BlockSnapshot;
-import org.spongepowered.api.block.tileentity.Sign;
-import org.spongepowered.api.data.manipulator.immutable.tileentity.ImmutableSignData;
-import org.spongepowered.api.data.value.immutable.ImmutableListValue;
 import org.spongepowered.api.data.value.mutable.ListValue;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.block.InteractBlockEvent;
 import org.spongepowered.api.event.block.tileentity.ChangeSignEvent;
-import org.spongepowered.api.network.PlayerConnection;
 import org.spongepowered.api.text.Text;
 
 /**
@@ -27,7 +23,7 @@ import org.spongepowered.api.text.Text;
  */
 public final class HelmSign {
 
-    public static void onSignChange(ChangeSignEvent event, Player player){
+    public static void onSignChange(ChangeSignEvent event, Player player) {
 
         if (Settings.RequireCreateSignPerm && !player.hasPermission("movecraft.createsign.cruise")) {
             player.sendMessage(Text.of("Insufficient Permissions"));
@@ -47,14 +43,15 @@ public final class HelmSign {
         Rotation rotation;
         if (event instanceof InteractBlockEvent.Secondary) {
             rotation = Rotation.CLOCKWISE;
-        }else if(event instanceof InteractBlockEvent.Primary){
+        } else if (event instanceof InteractBlockEvent.Primary) {
             rotation = Rotation.ANTICLOCKWISE;
-        }else{
+        } else {
             return;
         }
 
-        if (!block.getLocation().isPresent())
+        if (!block.getLocation().isPresent()) {
             return;
+        }
 
         if (!BlockSnapshotSignDataUtil.getTextLine(block, 1).get().equalsIgnoreCase("\\\\  ||  /") ||
                 !BlockSnapshotSignDataUtil.getTextLine(block, 2).get().equalsIgnoreCase("\\u003d\\u003d      \\u003d\\u003d") || // \\u003d is =
@@ -69,7 +66,9 @@ public final class HelmSign {
             return;
         }
 
-        if (!player.hasPermission("movecraft." + craft.getType().getName().toLowerCase() + ".movement.rotate") && (craft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.movement.rotate"))) {
+        if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".movement.rotate") && (
+                craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player
+                        .hasPermission("movecraft.movement.rotate"))) {
             player.sendMessage(Text.of("Insufficient Permissions"));
             return;
         }
@@ -78,7 +77,7 @@ public final class HelmSign {
             return;
         }
 
-        if (craft.getType().rotateAtMidpoint()) {
+        if (craft.getType().getSetting(Defaults.RotateAtMidpoint.class).get().getValue()) {
             craft.rotate(craft.getHitBox().getMidPoint(), rotation);
         } else {
             craft.rotate(block.getLocation().get().getBlockPosition(), rotation);

@@ -1,5 +1,6 @@
 package io.github.pulverizer.movecraft.craft.crew;
 
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import org.spongepowered.api.Sponge;
@@ -8,6 +9,7 @@ import org.spongepowered.api.entity.living.player.Player;
 import java.util.UUID;
 
 public class CrewInvite {
+
     private UUID invitedPlayer;
     private UUID invitedBy;
     private UUID craftUUID;
@@ -20,7 +22,8 @@ public class CrewInvite {
         craftUUID = craft.getId();
 
         tickSent = Sponge.getServer().getRunningTimeTicks();
-        message = String.format("You have been invited by %s to serve under them aboard their %s.", invitedBy.getName(), craft.getType().getName());
+        message = String.format("You have been invited by %s to serve under them aboard their %s.", invitedBy.getName(), craft.getType().getSetting(
+                Defaults.Name.class).get().getValue());
     }
 
     public CrewInvite(UUID invitedPlayer, Player invitedBy, Craft craft, String craftName) {
@@ -29,7 +32,9 @@ public class CrewInvite {
         craftUUID = craft.getId();
 
         tickSent = Sponge.getServer().getRunningTimeTicks();
-        message = String.format("You have been invited by %s to serve under them aboard their %s, the %s.", invitedBy.getName(), craft.getType().getName(), craftName);
+        message = String.format("You have been invited by %s to serve under them aboard their %s, the %s.", invitedBy.getName(),
+                craft.getType().getSetting(
+                        Defaults.Name.class).get().getValue(), craftName);
     }
 
     public UUID getInvitedPlayerUUID() {

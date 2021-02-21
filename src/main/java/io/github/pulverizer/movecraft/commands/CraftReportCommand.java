@@ -15,6 +15,16 @@ import java.util.ArrayList;
 
 public class CraftReportCommand implements CommandExecutor {
 
+    public static void register() {
+        CommandSpec commandSpec = CommandSpec.builder()
+                .description(Text.of("Provides details on all active crafts on the server"))
+                .permission("movecraft.admin")
+                .executor(new CraftReportCommand())
+                .build();
+
+        Sponge.getCommandManager().register(Movecraft.getInstance(), commandSpec, "craftreport");
+    }
+
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
         ArrayList<Text> messages = new ArrayList<>();
@@ -27,15 +37,5 @@ public class CraftReportCommand implements CommandExecutor {
         src.sendMessages(messages);
 
         return CommandResult.success();
-    }
-
-    public static void register() {
-        CommandSpec commandSpec = CommandSpec.builder()
-                .description(Text.of("Provides details on all active crafts on the server"))
-                .permission("movecraft.admin")
-                .executor(new CraftReportCommand())
-                .build();
-
-        Sponge.getCommandManager().register(Movecraft.getInstance(), commandSpec, "craftreport");
     }
 }

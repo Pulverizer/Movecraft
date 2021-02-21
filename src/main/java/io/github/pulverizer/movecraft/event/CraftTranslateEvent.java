@@ -12,6 +12,7 @@ import org.spongepowered.api.event.cause.Cause;
  */
 @SuppressWarnings("unused")
 public class CraftTranslateEvent extends CraftEvent implements Cancellable {
+
     private final HashHitBox oldHitBox;
     private final HashHitBox newHitBox;
     private String failMessage = "";
@@ -27,7 +28,7 @@ public class CraftTranslateEvent extends CraftEvent implements Cancellable {
         return newHitBox;
     }
 
-    public HashHitBox getOldHitBox(){
+    public HashHitBox getOldHitBox() {
         return oldHitBox;
     }
 

@@ -1,11 +1,30 @@
 package io.github.pulverizer.movecraft.listener;
 
-import io.github.pulverizer.movecraft.config.Settings;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.event.CraftDetectEvent;
 import io.github.pulverizer.movecraft.event.SignTranslateEvent;
-import io.github.pulverizer.movecraft.sign.*;
+import io.github.pulverizer.movecraft.sign.AntiAircraftDirectorSign;
+import io.github.pulverizer.movecraft.sign.AscendSign;
+import io.github.pulverizer.movecraft.sign.CannonDirectorSign;
+import io.github.pulverizer.movecraft.sign.CommanderSign;
+import io.github.pulverizer.movecraft.sign.ContactsSign;
+import io.github.pulverizer.movecraft.sign.CraftSign;
+import io.github.pulverizer.movecraft.sign.CrewSign;
+import io.github.pulverizer.movecraft.sign.CruiseSign;
+import io.github.pulverizer.movecraft.sign.DescendSign;
+import io.github.pulverizer.movecraft.sign.HelmSign;
+import io.github.pulverizer.movecraft.sign.LoaderSign;
+import io.github.pulverizer.movecraft.sign.PilotSign;
+import io.github.pulverizer.movecraft.sign.RelativeMoveSign;
+import io.github.pulverizer.movecraft.sign.ReleaseSign;
+import io.github.pulverizer.movecraft.sign.RemoteSign;
+import io.github.pulverizer.movecraft.sign.RepairmanSign;
+import io.github.pulverizer.movecraft.sign.SpeedSign;
+import io.github.pulverizer.movecraft.sign.StaticMoveSign;
+import io.github.pulverizer.movecraft.sign.StatusSign;
+import io.github.pulverizer.movecraft.sign.SubcraftRotateSign;
+import io.github.pulverizer.movecraft.sign.TeleportSign;
 import io.github.pulverizer.movecraft.utils.HashHitBox;
 import org.spongepowered.api.block.BlockSnapshot;
 import org.spongepowered.api.block.BlockTypes;
@@ -139,8 +158,9 @@ public class SignListener {
                 break;
 
             default:
-                if (CraftManager.getInstance().getCraftTypeFromString(header) != null)
+                if (CraftManager.getInstance().getCraftTypeFromString(header) != null) {
                     CraftSign.onSignChange(event, player, header);
+                }
 
                 break;
         }
@@ -151,8 +171,9 @@ public class SignListener {
 
         Craft craft = event.getCraft();
 
-        if (!event.getWorld().getTileEntity(event.getBlockPosition()).isPresent())
+        if (!event.getWorld().getTileEntity(event.getBlockPosition()).isPresent()) {
             return;
+        }
 
         Sign sign = (Sign) event.getWorld().getTileEntity(event.getBlockPosition()).get();
 

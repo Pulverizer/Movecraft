@@ -1,23 +1,30 @@
 package io.github.pulverizer.movecraft;
 
 import com.google.inject.Inject;
-import io.github.pulverizer.movecraft.commands.*;
+import io.github.pulverizer.movecraft.async.AsyncManager;
+import io.github.pulverizer.movecraft.commands.ContactsCommand;
+import io.github.pulverizer.movecraft.commands.CraftReportCommand;
+import io.github.pulverizer.movecraft.commands.CraftTypesCommand;
+import io.github.pulverizer.movecraft.commands.CrewCommand;
+import io.github.pulverizer.movecraft.commands.DockCommand;
 import io.github.pulverizer.movecraft.config.ConfigManager;
-import io.github.pulverizer.movecraft.craft.crew.CrewManager;
-import io.github.pulverizer.movecraft.listener.*;
-import io.github.pulverizer.movecraft.sign.*;
+import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.listener.BlockListener;
+import io.github.pulverizer.movecraft.listener.FireballListener;
+import io.github.pulverizer.movecraft.listener.InteractListener;
+import io.github.pulverizer.movecraft.listener.PlayerListener;
+import io.github.pulverizer.movecraft.listener.SignListener;
+import io.github.pulverizer.movecraft.listener.TNTListener;
+import io.github.pulverizer.movecraft.map_updater.MapUpdateManager;
+import io.github.pulverizer.movecraft.sign.CommanderSign;
+import io.github.pulverizer.movecraft.sign.CrewSign;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.game.state.*;
+import org.spongepowered.api.event.game.state.GamePreInitializationEvent;
+import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.plugin.Plugin;
-
-import io.github.pulverizer.movecraft.async.AsyncManager;
-//import io.github.pulverizer.movecraft.commands.*;
-import io.github.pulverizer.movecraft.config.Settings;
-import io.github.pulverizer.movecraft.craft.CraftManager;
-import io.github.pulverizer.movecraft.map_updater.MapUpdateManager;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.service.sql.SqlService;
 
@@ -36,15 +43,22 @@ import java.sql.SQLException;
 public class Movecraft {
 
     private static Movecraft instance;
-
-    private SqlService sql;
     private final String databaseSettings = "jdbc:h2:";
     private final String databaseName = "/movecraft.db";
-
+    private SqlService sql;
     @Inject
     @ConfigDir(sharedRoot = false)
     private Path configDir;
+    @Inject
+    private Logger logger;
 
+    /**
+     * Fetches this Plugin's instance.
+     * @return The instance of this Plugin.
+     */
+    public static synchronized Movecraft getInstance() {
+        return instance;
+    }
 
     /**
      * Fetches the PATH of the config directory.
@@ -54,23 +68,12 @@ public class Movecraft {
         return configDir;
     }
 
-    @Inject
-    private Logger logger;
-
     /**
      * Fetches the Logger for this Plugin.
      * @return This Plugin's logger.
      */
     public Logger getLogger() {
         return this.logger;
-    }
-
-    /**
-     * Fetches this Plugin's instance.
-     * @return The instance of this Plugin.
-     */
-    public static synchronized Movecraft getInstance() {
-        return instance;
     }
 
     public Connection connectToSQL() {

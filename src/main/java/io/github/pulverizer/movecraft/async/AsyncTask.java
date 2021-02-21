@@ -10,6 +10,7 @@ import org.spongepowered.api.text.Text;
 import java.util.Optional;
 
 public abstract class AsyncTask {
+
     protected final Craft craft;
     protected final String type;
 
@@ -32,8 +33,9 @@ public abstract class AsyncTask {
                 .execute(this::task)
                 .submit(Movecraft.getInstance());
 
-        if (Settings.Debug)
+        if (Settings.Debug) {
             Movecraft.getInstance().getLogger().info(taskName);
+        }
 
     }
 

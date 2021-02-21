@@ -12,6 +12,7 @@ import org.spongepowered.api.world.World;
 import java.util.Random;
 
 public class ParticleUpdateCommand extends UpdateCommand {
+
     private final Location<World> location;
     private final ParticleType particleType;
     private final int quantity;
@@ -39,11 +40,14 @@ public class ParticleUpdateCommand extends UpdateCommand {
 
             ParticleEffect particle = ParticleEffect.builder().type(ParticleTypes.HAPPY_VILLAGER).build();
 
-            for (Entity entity : location.getExtent().getEntities(entity -> entity instanceof Player)) { // this is necessary because signs do not get updated client side correctly without refreshing the chunks, which causes a memory leak in the clients
+            for (Entity entity : location.getExtent().getEntities(
+                    entity -> entity instanceof Player)) { // this is necessary because signs do not get updated client side correctly without
+                // refreshing the chunks, which causes a memory leak in the clients
 
                 Player p = (Player) entity;
                 double distSquared = location.getPosition().distanceSquared(p.getLocation().getPosition());
-                if ((distSquared < Settings.SilhouetteViewDistance * Settings.SilhouetteViewDistance) && (distSquared > (location.getExtent().getViewDistance() -1 )*(location.getExtent().getViewDistance() -1 ))) {
+                if ((distSquared < Settings.SilhouetteViewDistance * Settings.SilhouetteViewDistance) && (distSquared
+                        > (location.getExtent().getViewDistance() - 1) * (location.getExtent().getViewDistance() - 1))) {
                     p.spawnParticles(particle, location.getPosition().toDouble(), 9);
                 }
             }

@@ -2,6 +2,7 @@ package io.github.pulverizer.movecraft.sign;
 
 import com.flowpowered.math.vector.Vector3i;
 import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.event.CraftDetectEvent;
@@ -27,12 +28,14 @@ import org.spongepowered.api.world.World;
  */
 public final class CruiseSign {
 
-    public static void onCraftDetect(CraftDetectEvent event, World world, HashHitBox hitBox){
+    public static void onCraftDetect(CraftDetectEvent event, World world, HashHitBox hitBox) {
 
-        for(Vector3i location : hitBox) {
+        for (Vector3i location : hitBox) {
 
-            if (world.getBlockType(location) != BlockTypes.WALL_SIGN && world.getBlockType(location) != BlockTypes.STANDING_SIGN || !world.getTileEntity(location).isPresent())
+            if (world.getBlockType(location) != BlockTypes.WALL_SIGN && world.getBlockType(location) != BlockTypes.STANDING_SIGN || !world
+                    .getTileEntity(location).isPresent()) {
                 continue;
+            }
 
             Sign sign = (Sign) world.getTileEntity(location).get();
             ListValue<Text> lines = sign.lines();
@@ -46,8 +49,9 @@ public final class CruiseSign {
 
     public static void onSignClick(InteractBlockEvent.Secondary.MainHand event, Player player, BlockSnapshot block) {
 
-        if (!block.getLocation().isPresent() || !block.getLocation().get().getTileEntity().isPresent())
+        if (!block.getLocation().isPresent() || !block.getLocation().get().getTileEntity().isPresent()) {
             return;
+        }
 
         Sign sign = (Sign) block.getLocation().get().getTileEntity().get();
         ListValue<Text> lines = sign.lines();
@@ -61,18 +65,21 @@ public final class CruiseSign {
                 return;
             }
 
-            if (!craft.getType().getCanCruise()) {
+            if (!craft.getType().getSetting(Defaults.CanCruise.class).get().getValue()) {
                 return;
             }
 
-            if (!player.hasPermission("movecraft." + craft.getType().getName() + ".movement.cruise") && (craft.getType().requiresSpecificPerms() || !player.hasPermission("movecraft.movement.cruise"))) {
+            if (!player.hasPermission("movecraft." + craft.getType().getSetting(Defaults.Name.class).get().getValue() + ".movement.cruise") && (
+                    craft.getType().getSetting(Defaults.RequiresSpecificPerms.class).get().getValue() || !player
+                            .hasPermission("movecraft.movement.cruise"))) {
                 player.sendMessage(Text.of("Insufficient Permissions"));
                 return;
             }
 
             //get Cruise Direction
             Direction cruiseDirection = block.get(Keys.DIRECTION).get();
-            if (cruiseDirection != Direction.NORTH && cruiseDirection != Direction.WEST && cruiseDirection != Direction.SOUTH && cruiseDirection != Direction.EAST) {
+            if (cruiseDirection != Direction.NORTH && cruiseDirection != Direction.WEST && cruiseDirection != Direction.SOUTH
+                    && cruiseDirection != Direction.EAST) {
                 player.sendMessage(Text.of("Invalid Cruise Direction!"));
                 return;
             }

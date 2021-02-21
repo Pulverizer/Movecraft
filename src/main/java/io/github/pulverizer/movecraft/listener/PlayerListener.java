@@ -1,11 +1,12 @@
 package io.github.pulverizer.movecraft.listener;
 
 import com.flowpowered.math.vector.Vector3d;
+import io.github.pulverizer.movecraft.config.Settings;
+import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
+import io.github.pulverizer.movecraft.craft.Craft;
+import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.enums.DirectControlMode;
 import io.github.pulverizer.movecraft.utils.MathUtils;
-import io.github.pulverizer.movecraft.craft.Craft;
-import io.github.pulverizer.movecraft.config.Settings;
-import io.github.pulverizer.movecraft.craft.CraftManager;
 import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
@@ -23,9 +24,12 @@ import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.world.explosion.Explosion;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Random;
+import java.util.WeakHashMap;
 
 public class PlayerListener {
+
     private final Map<Craft, Long> timeToReleaseAfter = new WeakHashMap<>();
 
     @Listener
@@ -36,8 +40,9 @@ public class PlayerListener {
         if (craft != null) {
             craft.removeCrewMember(player.getUniqueId());
 
-            if (craft.crewIsEmpty())
+            if (craft.crewIsEmpty()) {
                 craft.release(player);
+            }
         }
     }
 
@@ -47,8 +52,9 @@ public class PlayerListener {
 
         Craft craft = CraftManager.getInstance().getCraftByPlayer(player.getUniqueId());
 
-        if (craft == null)
+        if (craft == null) {
             return;
+        }
 
         if (craft.getCommander() == player.getUniqueId()) {
             craft.setCommander(craft.getNextInCommand());
@@ -57,18 +63,23 @@ public class PlayerListener {
         craft.removeCrewMember(player.getUniqueId());
 
         //TODO: Change to not release but allow the ship to keep cruising and be sunk or claimed.
-        if (craft.crewIsEmpty())
+        if (craft.crewIsEmpty()) {
             craft.release(player);
+        }
     }
 
     @Listener
     public void playerFireDamage(DamageEntityEvent event, @Getter("getTargetEntity") Player player, @Getter("getSource") DamageSource damageSource) {
         if (Settings.AmmoDetonationMultiplier > 0 && damageSource.getType().equals(DamageTypes.FIRE)) {
-            float tntCount = player.getInventory().query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.TNT), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.TNT_MINECART)).totalItems();
+            float tntCount = player.getInventory()
+                    .query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.TNT), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.TNT_MINECART)).totalItems();
             float fireChargeCount = player.getInventory().query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIRE_CHARGE)).totalItems();
-            float otherCount = player.getInventory().query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIREWORK_CHARGE), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIREWORKS), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.GUNPOWDER)).totalItems();
+            float otherCount = player.getInventory()
+                    .query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIREWORK_CHARGE), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIREWORKS),
+                            QueryOperationTypes.ITEM_TYPE.of(ItemTypes.GUNPOWDER)).totalItems();
 
-            float chance = ((tntCount / (Settings.AmmoDetonationMultiplier * 128)) + (fireChargeCount / (Settings.AmmoDetonationMultiplier * 512)) + (otherCount / (Settings.AmmoDetonationMultiplier * 1024)));
+            float chance = ((tntCount / (Settings.AmmoDetonationMultiplier * 128)) + (fireChargeCount / (Settings.AmmoDetonationMultiplier * 512)) + (
+                    otherCount / (Settings.AmmoDetonationMultiplier * 1024)));
 
             int diceRolled = new Random().nextInt(100);
 
@@ -87,15 +98,21 @@ public class PlayerListener {
                         .build();
 
                 if (tntCount > 0) {
-                    player.getInventory().query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.TNT), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.TNT_MINECART)).transform(InventoryTransformations.REVERSE).poll((int) tntCount / 2);
+                    player.getInventory()
+                            .query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.TNT), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.TNT_MINECART))
+                            .transform(InventoryTransformations.REVERSE).poll((int) tntCount / 2);
                 }
 
-                if (fireChargeCount > 0 ) {
-                    player.getInventory().query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIRE_CHARGE)).transform(InventoryTransformations.REVERSE).poll((int) fireChargeCount / 2);
+                if (fireChargeCount > 0) {
+                    player.getInventory().query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIRE_CHARGE)).transform(InventoryTransformations.REVERSE)
+                            .poll((int) fireChargeCount / 2);
                 }
 
                 if (otherCount > 0) {
-                    player.getInventory().query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIREWORK_CHARGE), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIREWORKS), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.GUNPOWDER)).transform(InventoryTransformations.REVERSE).poll((int) otherCount / 2);
+                    player.getInventory()
+                            .query(QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIREWORK_CHARGE), QueryOperationTypes.ITEM_TYPE.of(ItemTypes.FIREWORKS),
+                                    QueryOperationTypes.ITEM_TYPE.of(ItemTypes.GUNPOWDER)).transform(InventoryTransformations.REVERSE)
+                            .poll((int) otherCount / 2);
                 }
 
                 player.getWorld().triggerExplosion(explosion);
@@ -134,24 +151,24 @@ public class PlayerListener {
             }
 
             playerDisplacement = playerDisplacement.normalize();
-            playerDisplacement = playerDisplacement.mul(craft.getType().getCruiseSkipBlocks());
+            playerDisplacement = playerDisplacement.mul(craft.getType().getSetting(Defaults.CruiseSkipBlocks.class).get().getValue());
 
             craft.translate(playerDisplacement.toInt());
             return;
         }
 
-        if(MathUtils.locationNearHitBox(craft.getHitBox(), player.getPosition(), 2)){
+        if (MathUtils.locationNearHitBox(craft.getHitBox(), player.getPosition(), 2)) {
             timeToReleaseAfter.remove(craft);
             return;
         }
 
-        if(timeToReleaseAfter.containsKey(craft) && timeToReleaseAfter.get(craft) < System.currentTimeMillis()){
+        if (timeToReleaseAfter.containsKey(craft) && timeToReleaseAfter.get(craft) < System.currentTimeMillis()) {
             craft.removeCrewMember(player.getUniqueId());
             timeToReleaseAfter.remove(craft);
             return;
         }
 
-        if (!craft.isProcessing() && craft.getType().getMoveEntities() && !timeToReleaseAfter.containsKey(craft)) {
+        if (!craft.isProcessing() && craft.getType().getSetting(Defaults.MoveEntities.class).get().getValue() && !timeToReleaseAfter.containsKey(craft)) {
             if (Settings.ManOverboardTimeout != 0) {
                 player.sendMessage(Text.of("You have left your craft.")); //TODO: Re-add /manoverboard
             } else {

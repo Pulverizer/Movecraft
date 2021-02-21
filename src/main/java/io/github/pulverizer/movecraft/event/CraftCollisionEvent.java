@@ -6,6 +6,7 @@ import org.spongepowered.api.event.Cancellable;
 import org.spongepowered.api.event.cause.Cause;
 
 public class CraftCollisionEvent extends CraftEvent implements Cancellable {
+
     private final HashHitBox hitBox;
 
     public CraftCollisionEvent(Craft craft, HashHitBox hitBox) {

@@ -26,8 +26,6 @@ import java.util.HashSet;
  * @version 1.0 - 20 Apr 2020
  */
 public class ChunkDataManager {
-    private WorldServer worldServer;
-    private final HashMap<Vector2i, Chunk> chunkMap = new HashMap<>();
 
     private static final NextTickProvider tickProvider = new NextTickProvider();
     private static final net.minecraft.util.Rotation[] ROTATION;
@@ -39,19 +37,18 @@ public class ChunkDataManager {
         ROTATION[Rotation.ANTICLOCKWISE.ordinal()] = net.minecraft.util.Rotation.COUNTERCLOCKWISE_90;
     }
 
+    private final HashMap<Vector2i, Chunk> chunkMap = new HashMap<>();
     // Set of old block positions
     private final HashSet<Vector3i> oldPositions;
-
     // Chunk Position and Section : Set of Block Positions
     private final HashMap<Vector3i, HashSet<Vector3i>> blockPosMap = new HashMap<>();
     // Block Positions : BlockState
     private final HashMap<Vector3i, IBlockState> blockStateMap = new HashMap<>();
-
     // Chunk Position and Section : Set of Tile Positions
     private final HashMap<Vector3i, HashSet<Vector3i>> tilePosMap = new HashMap<>();
     // Block Positions : TileHolder
     private final HashMap<Vector3i, TileHolder> tiles = new HashMap<>();
-
+    private WorldServer worldServer;
 
 
     public ChunkDataManager(World world, HashSet<Vector3i> oldPositions) {
@@ -67,20 +64,23 @@ public class ChunkDataManager {
 
     public void fetchBlocksAndRotate(Rotation rotation, Vector3i originPoint) {
         HashSet<Vector3i> positions = new HashSet<>(oldPositions);
-        positions.forEach(position -> addBlock(MathUtils.rotateVec(rotation, position.sub(originPoint)).add(originPoint), worldServer.getBlockState(WorldUtils.locationToBlockPos(position)).withRotation(ROTATION[rotation.ordinal()])));
+        positions.forEach(position -> addBlock(MathUtils.rotateVec(rotation, position.sub(originPoint)).add(originPoint),
+                worldServer.getBlockState(WorldUtils.locationToBlockPos(position)).withRotation(ROTATION[rotation.ordinal()])));
     }
 
     public void fetchTilesAndTranslate(Vector3i translateVector) {
         oldPositions.forEach(position -> {
             BlockPos blockPos = WorldUtils.locationToBlockPos(position);
 
-            if (!worldServer.getBlockState(blockPos).getBlock().hasTileEntity())
+            if (!worldServer.getBlockState(blockPos).getBlock().hasTileEntity()) {
                 return;
+            }
 
             TileEntity tile = removeTileEntity(position);
 
-            if (tile == null)
+            if (tile == null) {
                 return;
+            }
 
             //get the nextTick to move with the tile
             addTile(position.add(translateVector), new TileHolder(tile, tickProvider.getNextTick(worldServer, position), position));
@@ -91,15 +91,18 @@ public class ChunkDataManager {
         oldPositions.forEach(position -> {
             BlockPos blockPos = WorldUtils.locationToBlockPos(position);
 
-            if (!worldServer.getBlockState(blockPos).getBlock().hasTileEntity())
+            if (!worldServer.getBlockState(blockPos).getBlock().hasTileEntity()) {
                 return;
+            }
 
             TileEntity tile = removeTileEntity(position);
-            if (tile == null)
+            if (tile == null) {
                 return;
+            }
 
             //get the nextTick to move with the tile
-            addTile(MathUtils.rotateVec(rotation, position.sub(originPoint)).add(originPoint), new TileHolder(tile, tickProvider.getNextTick(worldServer, position), position));
+            addTile(MathUtils.rotateVec(rotation, position.sub(originPoint)).add(originPoint),
+                    new TileHolder(tile, tickProvider.getNextTick(worldServer, position), position));
         });
     }
 
@@ -190,7 +193,8 @@ public class ChunkDataManager {
 
                 if (tileHolder.getNextTick() != null) {
                     final long currentTime = worldServer.getWorldTime();
-                    worldServer.scheduleBlockUpdate(blockPos, tileHolder.getTile().getBlockType(), (int) (tileHolder.getNextTick().scheduledTime - currentTime), tileHolder.getNextTick().priority);
+                    worldServer.scheduleBlockUpdate(blockPos, tileHolder.getTile().getBlockType(),
+                            (int) (tileHolder.getNextTick().scheduledTime - currentTime), tileHolder.getNextTick().priority);
                 }
             });
 
