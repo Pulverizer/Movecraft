@@ -13,7 +13,6 @@ import io.github.pulverizer.movecraft.listener.BlockListener;
 import io.github.pulverizer.movecraft.listener.InteractListener;
 import io.github.pulverizer.movecraft.listener.PlayerListener;
 import io.github.pulverizer.movecraft.listener.SignListener;
-import io.github.pulverizer.movecraft.listener.TNTListener;
 import io.github.pulverizer.movecraft.map_updater.MapUpdateManager;
 import io.github.pulverizer.movecraft.sign.CommanderSign;
 import io.github.pulverizer.movecraft.sign.CrewSign;
@@ -125,7 +124,6 @@ public class Movecraft {
         Sponge.getEventManager().registerListeners(this, new SignListener());
         Sponge.getEventManager().registerListeners(this, new CrewSign());
         Sponge.getEventManager().registerListeners(this, new CommanderSign());
-        Sponge.getEventManager().registerListeners(this, new TNTListener());
 
         logger.info("Movecraft Enabled.");
     }

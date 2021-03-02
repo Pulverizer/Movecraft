@@ -4,6 +4,7 @@ import static org.spongepowered.api.event.Order.FIRST;
 import static org.spongepowered.api.event.Order.LAST;
 
 import com.flowpowered.math.vector.Vector3i;
+import io.github.pulverizer.movecraft.Movecraft;
 import io.github.pulverizer.movecraft.config.Settings;
 import io.github.pulverizer.movecraft.config.craft_settings.Defaults;
 import io.github.pulverizer.movecraft.craft.Craft;
@@ -12,14 +13,19 @@ import io.github.pulverizer.movecraft.sign.CommanderSign;
 import io.github.pulverizer.movecraft.sign.CrewSign;
 import io.github.pulverizer.movecraft.utils.CollectionUtils;
 import org.spongepowered.api.block.BlockSnapshot;
+import org.spongepowered.api.block.BlockTypes;
 import org.spongepowered.api.data.Transaction;
+import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.data.property.block.MatterProperty;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.block.ChangeBlockEvent;
 import org.spongepowered.api.event.cause.EventContextKeys;
 import org.spongepowered.api.event.filter.cause.Root;
+import org.spongepowered.api.event.world.ExplosionEvent;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.util.Direction;
+import org.spongepowered.api.world.BlockChangeFlags;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -54,6 +60,101 @@ public class BlockListener {
             if (transaction.isValid()) {
                 CommanderSign.onSignBreak(event, transaction);
                 CrewSign.onSignBreak(event, transaction);
+            }
+        }
+    }
+
+    // Anti-Spill
+    //TODO - Move to BlockBreakEvent
+    @Listener(order = LAST)
+    public void explodeEvent(ExplosionEvent.Detonate event) {
+
+        // Remove any blocks from the list that were adjacent to water, to prevent spillage
+        if (!Settings.DisableSpillProtection) {
+
+            HashSet<Location<World>> affectedLocations = new HashSet<>(event.getAffectedLocations());
+
+            for (Location<World> affectedLocation : affectedLocations) {
+
+                for (Craft craft : CraftManager.getInstance().getCraftsInWorld(affectedLocation.getExtent())) {
+
+                    if (craft == null || !craft.getHitBox().contains(affectedLocation.getBlockPosition())) {
+                        continue;
+                    }
+
+                    HashSet<Location<World>> blockList = new HashSet<>();
+
+                    Location<World> relativeBlockPos = affectedLocation.getBlockRelative(Direction.NORTH);
+
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
+                        blockList.add(relativeBlockPos);
+                    }
+
+                    relativeBlockPos = affectedLocation.getBlockRelative(Direction.WEST);
+
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
+                        blockList.add(relativeBlockPos);
+                    }
+
+                    relativeBlockPos = affectedLocation.getBlockRelative(Direction.EAST);
+
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
+                        blockList.add(relativeBlockPos);
+                    }
+
+                    relativeBlockPos = affectedLocation.getBlockRelative(Direction.SOUTH);
+
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
+                        blockList.add(relativeBlockPos);
+                    }
+
+                    relativeBlockPos = affectedLocation.getBlockRelative(Direction.UP);
+
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
+                        blockList.add(relativeBlockPos);
+                    }
+
+                    relativeBlockPos = affectedLocation.getBlockRelative(Direction.UP).getBlockRelative(Direction.NORTH);
+
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
+                        blockList.add(relativeBlockPos);
+                    }
+
+                    relativeBlockPos = affectedLocation.getBlockRelative(Direction.UP).getBlockRelative(Direction.WEST);
+
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
+                        blockList.add(relativeBlockPos);
+                    }
+
+                    relativeBlockPos = affectedLocation.getBlockRelative(Direction.UP).getBlockRelative(Direction.EAST);
+
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
+                        blockList.add(relativeBlockPos);
+                    }
+
+                    relativeBlockPos = affectedLocation.getBlockRelative(Direction.UP).getBlockRelative(Direction.SOUTH);
+
+                    if (craft.getHitBox().contains(relativeBlockPos.getBlockPosition())) {
+                        blockList.add(relativeBlockPos);
+                    }
+
+
+                    //TODO: Can't seem to get Fluid Level???
+                    // Test anti-spill
+                    for (Location<World> testLoc : blockList) {
+
+                        if (testLoc.getProperty(MatterProperty.class).get().getValue() == MatterProperty.Matter.LIQUID && testLoc.getBlock()
+                                .get(Keys.FLUID_LEVEL).isPresent()) {// && testLoc.get(Keys.FLUID_LEVEL).get() == 1) {
+                            Movecraft.getInstance().getLogger().info("Fluid Level: " + testLoc.getBlock().get(Keys.FLUID_LEVEL).get());
+                            testLoc.restoreSnapshot(BlockTypes.AIR.getDefaultState().snapshotFor(testLoc), true, BlockChangeFlags.ALL);
+                        }
+
+                        if (testLoc.getProperty(MatterProperty.class).isPresent()
+                                && testLoc.getProperty(MatterProperty.class).get().getValue() == MatterProperty.Matter.LIQUID) {
+                            event.getAffectedLocations().remove(affectedLocation);
+                        }
+                    }
+                }
             }
         }
     }
