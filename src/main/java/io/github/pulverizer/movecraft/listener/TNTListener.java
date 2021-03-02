@@ -363,8 +363,7 @@ public class TNTListener {
 
                 for (Craft craft : CraftManager.getInstance().getCraftsInWorld(affectedLocation.getExtent())) {
 
-                    if (craft == null || !craft.getHitBox()
-                            .contains(affectedLocation.getBlockX(), affectedLocation.getBlockY(), affectedLocation.getBlockZ())) {
+                    if (craft == null || !craft.getHitBox().contains(affectedLocation.getBlockPosition())) {
                         continue;
                     }
 

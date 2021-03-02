@@ -10,7 +10,6 @@ import io.github.pulverizer.movecraft.commands.DockCommand;
 import io.github.pulverizer.movecraft.config.ConfigManager;
 import io.github.pulverizer.movecraft.config.Settings;
 import io.github.pulverizer.movecraft.listener.BlockListener;
-import io.github.pulverizer.movecraft.listener.FireballListener;
 import io.github.pulverizer.movecraft.listener.InteractListener;
 import io.github.pulverizer.movecraft.listener.PlayerListener;
 import io.github.pulverizer.movecraft.listener.SignListener;
@@ -127,7 +126,6 @@ public class Movecraft {
         Sponge.getEventManager().registerListeners(this, new CrewSign());
         Sponge.getEventManager().registerListeners(this, new CommanderSign());
         Sponge.getEventManager().registerListeners(this, new TNTListener());
-        Sponge.getEventManager().registerListeners(this, new FireballListener());
 
         logger.info("Movecraft Enabled.");
     }

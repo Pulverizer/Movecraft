@@ -4,9 +4,7 @@ import io.github.pulverizer.movecraft.craft.Craft;
 import io.github.pulverizer.movecraft.craft.CraftManager;
 import io.github.pulverizer.movecraft.event.CraftDetectEvent;
 import io.github.pulverizer.movecraft.event.SignTranslateEvent;
-import io.github.pulverizer.movecraft.sign.AntiAircraftDirectorSign;
 import io.github.pulverizer.movecraft.sign.AscendSign;
-import io.github.pulverizer.movecraft.sign.CannonDirectorSign;
 import io.github.pulverizer.movecraft.sign.CommanderSign;
 import io.github.pulverizer.movecraft.sign.ContactsSign;
 import io.github.pulverizer.movecraft.sign.CraftSign;
@@ -14,12 +12,10 @@ import io.github.pulverizer.movecraft.sign.CrewSign;
 import io.github.pulverizer.movecraft.sign.CruiseSign;
 import io.github.pulverizer.movecraft.sign.DescendSign;
 import io.github.pulverizer.movecraft.sign.HelmSign;
-import io.github.pulverizer.movecraft.sign.LoaderSign;
 import io.github.pulverizer.movecraft.sign.PilotSign;
 import io.github.pulverizer.movecraft.sign.RelativeMoveSign;
 import io.github.pulverizer.movecraft.sign.ReleaseSign;
 import io.github.pulverizer.movecraft.sign.RemoteSign;
-import io.github.pulverizer.movecraft.sign.RepairmanSign;
 import io.github.pulverizer.movecraft.sign.SpeedSign;
 import io.github.pulverizer.movecraft.sign.StaticMoveSign;
 import io.github.pulverizer.movecraft.sign.StatusSign;
@@ -48,14 +44,10 @@ public class SignListener {
             return;
         }
 
-        AntiAircraftDirectorSign.onSignClick(event, player, block);
-        CannonDirectorSign.onSignClick(event, player, block);
         HelmSign.onSignClick(event, player, block);
         PilotSign.onSignClick(event, player, block);
         RemoteSign.onSignClick(event, player, block);
         SubcraftRotateSign.onSignClick(event, player, block);
-        RepairmanSign.onSignClick(event, player, block);
-        LoaderSign.onSignClick(event, player, block);
 
         if (event instanceof InteractBlockEvent.Secondary.MainHand) {
 

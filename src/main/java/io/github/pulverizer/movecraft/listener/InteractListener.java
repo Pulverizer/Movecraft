@@ -58,6 +58,7 @@ public final class InteractListener {
 
                 if (craft.isLoader(player.getUniqueId())) {
                     isLoader = true;
+                    break;
                 }
             }
         }
