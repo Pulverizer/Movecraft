@@ -5,7 +5,7 @@ import io.github.pulverizer.movecraft.utils.HashHitBox;
 import org.spongepowered.api.event.Cancellable;
 import org.spongepowered.api.event.cause.Cause;
 
-public class CraftCollisionEvent extends CraftEvent implements Cancellable {
+public class CraftCollisionEvent extends AbstractCraftEvent implements Cancellable {
 
     private final HashHitBox hitBox;
 

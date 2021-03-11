@@ -4,7 +4,7 @@ import io.github.pulverizer.movecraft.craft.Craft;
 import org.spongepowered.api.event.Cancellable;
 import org.spongepowered.api.event.cause.Cause;
 
-public class CraftSinkEvent extends CraftEvent implements Cancellable {
+public class CraftSinkEvent extends AbstractCraftEvent implements Cancellable {
 
     private boolean cancelled = false;
 

@@ -8,7 +8,7 @@ import org.spongepowered.api.event.cause.Cause;
  * @see Craft
  */
 @SuppressWarnings("unused")
-public class CraftPilotEvent extends CraftEvent {
+public class CraftPilotEvent extends AbstractCraftEvent {
 
     private final Reason reason;
 

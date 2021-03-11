@@ -45,11 +45,6 @@ public class Settings {
     public static double FadePercentageOfWreckPerCycle = 10.0;
     public static Map<BlockType, Integer> ExtraFadeTimePerBlock = new HashMap<>();
 
-    //   Repairs
-    public static int RepairTicksPerBlock = 0;
-    public static double RepairMaxPercent = 50;
-    public static double RepairMoneyPerBlock = 0.0;
-
 
     // Crew
     public static boolean ReleaseOnCrewDeath;
@@ -68,6 +63,8 @@ public class Settings {
     // TODO - Should we be overriding /home ?
     //public static boolean SetHomeToCrewSign = true;
 
+
+    //TODO - Move to addon
 
     // Combat Related
     //   Armour

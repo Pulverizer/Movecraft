@@ -8,7 +8,7 @@ import org.spongepowered.api.event.cause.Cause;
 import org.spongepowered.api.event.cause.EventContext;
 import org.spongepowered.api.text.Text;
 
-public class CraftDetectEvent extends CraftEvent {
+public class CraftDetectEvent extends AbstractCraftEvent {
 
     private final Cause cause;
     private final Player player;

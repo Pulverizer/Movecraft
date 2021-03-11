@@ -159,6 +159,7 @@ public class BlockListener {
         }
     }
 
+    //TODO - Move repairing to addon
     @Listener(order = LAST)
     public void onBlockPlace(ChangeBlockEvent.Place event, @Root Player player) {
         if (Settings.ProtectPilotedCrafts) {
@@ -264,6 +265,7 @@ public class BlockListener {
     }
 
     //TODO: Is this listener needed?
+    // Move to addon
 
     // Should not need this due to blocks still ticking?
 

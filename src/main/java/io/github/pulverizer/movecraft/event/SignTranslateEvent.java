@@ -7,12 +7,12 @@ import org.spongepowered.api.event.cause.EventContext;
 import org.spongepowered.api.world.World;
 
 
-public class SignTranslateEvent extends CraftEvent {
+public class SignTranslateEvent extends AbstractCraftEvent {
 
     private final Vector3i location;
     private final World world;
 
-    public SignTranslateEvent(Vector3i location, Craft craft) throws IndexOutOfBoundsException {
+    public SignTranslateEvent(Vector3i location, Craft craft) {
         super(craft);
         this.location = location;
         this.world = craft.getWorld();
